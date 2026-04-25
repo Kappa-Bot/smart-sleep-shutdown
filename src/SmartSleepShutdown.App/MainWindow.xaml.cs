@@ -59,6 +59,7 @@ public partial class MainWindow : Window
         {
             e.Cancel = true;
             Hide();
+            _trayIcon.ShowStillRunningHint();
             return;
         }
 

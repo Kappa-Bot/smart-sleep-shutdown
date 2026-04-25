@@ -11,6 +11,15 @@ public sealed class MainWindowXamlTests
         Assert.DoesNotContain("Text=\"{Binding CountdownSecondsRemaining}\"", xaml);
     }
 
+    [Fact]
+    public void WindowExplainsThatCloseKeepsTrayIcon()
+    {
+        var xaml = File.ReadAllText(FindProjectFile("src", "SmartSleepShutdown.App", "MainWindow.xaml"));
+
+        Assert.Contains("Al cerrar, sigue activo junto al reloj", xaml);
+        Assert.Contains("Smart Sleep Shutdown", xaml);
+    }
+
     private static string FindProjectFile(params string[] pathParts)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

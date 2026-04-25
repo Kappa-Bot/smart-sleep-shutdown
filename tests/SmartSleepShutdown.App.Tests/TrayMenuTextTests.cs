@@ -9,4 +9,11 @@ public sealed class TrayMenuTextTests
     {
         Assert.Equal("Desactivar hasta manana", TrayMenuText.DisableUntilTomorrow);
     }
+
+    [Fact]
+    public void TrayHintExplainsCloseToTray()
+    {
+        Assert.Equal("Sigue activo junto al reloj", TrayMenuText.StillRunningTitle);
+        Assert.Contains("icono", TrayMenuText.StillRunningMessage);
+    }
 }

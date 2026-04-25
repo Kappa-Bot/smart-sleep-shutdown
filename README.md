@@ -16,6 +16,8 @@ The app never shuts down silently. It shows `PC will shut down in 60 seconds`, s
 
 The app stays available from the Windows notification area in the lower-right corner.
 
+Left-click the tray icon to open the app.
+
 Right-click the tray icon to:
 
 - see whether Smart Sleep Shutdown is `ON`, `OFF`, or paused until tomorrow
@@ -24,7 +26,7 @@ Right-click the tray icon to:
 - deactivate monitoring until the next day
 - exit the app
 
-Closing the window hides it to the tray. Use `Salir` from the tray menu to close the app.
+Closing the window hides it to the tray and shows a short hint so the user knows it is still running. Use `Salir` from the tray menu to close the app.
 
 The tray icon has a status badge:
 

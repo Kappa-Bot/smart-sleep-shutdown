@@ -32,16 +32,27 @@ public sealed class TrayIconService : IDisposable
         };
 
         _notifyIcon.DoubleClick += OnOpenRequested;
+        _notifyIcon.MouseClick += OnMouseClick;
         _menu.Opening += OnMenuOpening;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         RebuildMenu();
     }
 
+    public void ShowStillRunningHint()
+    {
+        _notifyIcon.Visible = true;
+        _notifyIcon.BalloonTipTitle = TrayMenuText.StillRunningTitle;
+        _notifyIcon.BalloonTipText = TrayMenuText.StillRunningMessage;
+        _notifyIcon.BalloonTipIcon = Forms.ToolTipIcon.Info;
+        _notifyIcon.ShowBalloonTip(5000);
+    }
+
     public void Dispose()
     {
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _menu.Opening -= OnMenuOpening;
+        _notifyIcon.MouseClick -= OnMouseClick;
         _notifyIcon.DoubleClick -= OnOpenRequested;
         _notifyIcon.Visible = false;
         _notifyIcon.Dispose();
@@ -70,6 +81,14 @@ public sealed class TrayIconService : IDisposable
     private void OnOpenRequested(object? sender, EventArgs e)
     {
         _openWindow();
+    }
+
+    private void OnMouseClick(object? sender, Forms.MouseEventArgs e)
+    {
+        if (e.Button == Forms.MouseButtons.Left)
+        {
+            _openWindow();
+        }
     }
 
     private void RebuildMenu()
