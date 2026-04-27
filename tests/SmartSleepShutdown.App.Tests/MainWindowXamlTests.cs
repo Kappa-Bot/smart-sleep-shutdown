@@ -20,6 +20,37 @@ public sealed class MainWindowXamlTests
         Assert.Contains("Smart Sleep Shutdown", xaml);
     }
 
+    [Fact]
+    public void WindowShowsClearSafetyAndTrayHints()
+    {
+        var xaml = File.ReadAllText(FindProjectFile("src", "SmartSleepShutdown.App", "MainWindow.xaml"));
+
+        Assert.Contains("1. Avisa 60 segundos", xaml);
+        Assert.Contains("2. Cancela con actividad", xaml);
+        Assert.Contains("3. Revisa bloqueos", xaml);
+        Assert.Contains("Icono verde activo", xaml);
+    }
+
+    [Fact]
+    public void WindowCanShowSettingsSaveWarning()
+    {
+        var xaml = File.ReadAllText(FindProjectFile("src", "SmartSleepShutdown.App", "MainWindow.xaml"));
+
+        Assert.Contains("SettingsWarningText", xaml);
+        Assert.Contains("IsSettingsWarningVisible", xaml);
+    }
+
+    [Fact]
+    public void SettingsTextBoxesCommitOnLostFocusToAvoidRestartingMonitorPerKeystroke()
+    {
+        var xaml = File.ReadAllText(FindProjectFile("src", "SmartSleepShutdown.App", "MainWindow.xaml"));
+
+        Assert.Contains("StartTimeText, UpdateSourceTrigger=LostFocus", xaml);
+        Assert.Contains("IdleThresholdMinutes, UpdateSourceTrigger=LostFocus", xaml);
+        Assert.DoesNotContain("StartTimeText, UpdateSourceTrigger=PropertyChanged", xaml);
+        Assert.DoesNotContain("IdleThresholdMinutes, UpdateSourceTrigger=PropertyChanged", xaml);
+    }
+
     private static string FindProjectFile(params string[] pathParts)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -43,6 +43,13 @@ Get-Process -Name SmartSleepShutdown
 
 - Add or update tests for every behavior change.
 - Keep UI minimal: status, ON/OFF, start time, idle threshold, context checks, countdown cancel.
+- Keep UI language Spanish unless user explicitly asks otherwise.
 - Avoid background loops. Prefer scheduled one-shot delays and cancellation.
 - Keep tray behavior predictable: close hides, Exit exits, second launch opens existing instance.
 - Preserve project isolation under this root folder.
+
+## UX Rules
+
+- Read `docs/UX_GUIDE.md` before UI changes.
+- Preserve tray-first behavior.
+- Add hints only when they prevent user confusion or unsafe operation.

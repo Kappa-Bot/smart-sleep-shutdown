@@ -24,14 +24,16 @@ The app should feel like a native Windows tray utility:
 ## Important Behaviors
 
 - Configured start can cross midnight, for example `23:00` stays active until `06:00`.
-- Invalid start time disarms monitoring and shows `Use HH:mm start time`.
+- Invalid start time disarms monitoring and shows `Usa hora HH:mm`.
 - Temporary pause lasts until local midnight.
 - Closing the window hides it to tray; tray Exit closes the process.
+- UI language is Spanish; keep new UX strings Spanish.
 - Installer uses `--exit` to request graceful shutdown before publishing.
 
 ## High-Value Future Improvements
 
 - Add a tiny first-run toast explaining close-to-tray.
+- Improve taskbar/app icon packaging with a checked-in `.ico`.
 - Add signed installer/MSIX if distribution is needed.
 - Add optional Windows notification API instead of only focusing the window.
 - Add more integration tests around installed startup when a UI automation harness is available.

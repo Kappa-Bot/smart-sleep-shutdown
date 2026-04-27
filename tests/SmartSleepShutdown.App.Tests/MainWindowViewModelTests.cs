@@ -3,6 +3,7 @@ using SmartSleepShutdown.App;
 using SmartSleepShutdown.App.Settings;
 using SmartSleepShutdown.Core.Abstractions;
 using SmartSleepShutdown.Core.Models;
+using System.Globalization;
 
 namespace SmartSleepShutdown.App.Tests;
 
@@ -17,7 +18,7 @@ public sealed class MainWindowViewModelTests
         Assert.Equal("01:00", viewModel.StartTimeText);
         Assert.Equal(15, viewModel.IdleThresholdMinutes);
         Assert.True(viewModel.ContextChecksEnabled);
-        Assert.Equal("Off", viewModel.StatusText);
+        Assert.Equal("Desactivado", viewModel.StatusText);
     }
 
     [Fact]
@@ -37,6 +38,13 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(new TimeOnly(2, 30), settings.StartTime);
         Assert.Equal(TimeSpan.FromMinutes(20), settings.IdleThreshold);
         Assert.False(settings.ContextChecksEnabled);
+    }
+
+    [Fact]
+    public void ToggleTextIsClearSpanish()
+    {
+        Assert.Equal("Activado", BooleanBoxes.OnOffConverter.Convert(true, typeof(string), null!, CultureInfo.InvariantCulture));
+        Assert.Equal("Desactivado", BooleanBoxes.OnOffConverter.Convert(false, typeof(string), null!, CultureInfo.InvariantCulture));
     }
 
     [Fact]
@@ -76,8 +84,8 @@ public sealed class MainWindowViewModelTests
         Assert.False(viewModel.IsEnabled);
         Assert.True(viewModel.IsTemporarilyDisabled);
         Assert.Equal(new DateTimeOffset(2026, 4, 26, 0, 0, 0, TimeSpan.Zero), viewModel.TemporarilyDisabledUntil);
-        Assert.Equal("Off until tomorrow", viewModel.StatusText);
-        Assert.Equal("Smart Sleep Shutdown - Paused until tomorrow", viewModel.TrayStatusText);
+        Assert.Equal("Pausado hasta manana", viewModel.StatusText);
+        Assert.Equal("Smart Sleep Shutdown - PAUSADO hasta manana", viewModel.TrayStatusText);
         Assert.False(viewModel.CreateSettings().Enabled);
     }
 
@@ -95,7 +103,7 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.IsEnabled);
         Assert.False(viewModel.IsTemporarilyDisabled);
         Assert.Null(viewModel.TemporarilyDisabledUntil);
-        Assert.Equal("Smart Sleep Shutdown - ON", viewModel.TrayStatusText);
+        Assert.Equal("Smart Sleep Shutdown - ACTIVO", viewModel.TrayStatusText);
     }
 
     [Fact]
@@ -111,7 +119,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.False(viewModel.IsEnabled);
         Assert.False(viewModel.IsTemporarilyDisabled);
-        Assert.Equal("Smart Sleep Shutdown - OFF", viewModel.TrayStatusText);
+        Assert.Equal("Smart Sleep Shutdown - DESACTIVADO", viewModel.TrayStatusText);
     }
 
     [Fact]
@@ -141,12 +149,12 @@ public sealed class MainWindowViewModelTests
             action => action());
 
         viewModel.IsEnabled = true;
-        await WaitUntilAsync(() => viewModel.StatusText == "Armed for 01:00");
+        await WaitUntilAsync(() => viewModel.StatusText == "Listo para 01:00");
 
         viewModel.StartTimeText = "00:40";
 
         await WaitUntilAsync(() => viewModel.IsCountdownActive);
-        Assert.Equal("PC will shut down in 60 seconds", viewModel.StatusText);
+        Assert.Equal("Apagado en 60 segundos", viewModel.StatusText);
     }
 
     [Fact]
@@ -165,7 +173,7 @@ public sealed class MainWindowViewModelTests
 
         viewModel.IsEnabled = true;
 
-        await WaitUntilAsync(() => viewModel.StatusText == "Sleeping until 23:45");
+        await WaitUntilAsync(() => viewModel.StatusText == "Durmiendo hasta 23:45");
     }
 
     [Fact]
@@ -184,7 +192,7 @@ public sealed class MainWindowViewModelTests
 
         viewModel.IsEnabled = true;
 
-        await WaitUntilAsync(() => viewModel.StatusText == "Use HH:mm start time");
+        await WaitUntilAsync(() => viewModel.StatusText == "Usa hora HH:mm");
         Assert.False(viewModel.CreateSettings().Enabled);
         Assert.False(viewModel.IsCountdownActive);
     }
@@ -203,7 +211,7 @@ public sealed class MainWindowViewModelTests
 
         viewModel.IsEnabled = true;
 
-        await WaitUntilAsync(() => viewModel.StatusText == "Blocked by detector");
+        await WaitUntilAsync(() => viewModel.StatusText == "Bloqueado: detector");
         Assert.False(viewModel.IsCountdownActive);
         Assert.Equal(0, shutdownExecutor.CallCount);
     }
@@ -221,7 +229,7 @@ public sealed class MainWindowViewModelTests
 
         viewModel.IsEnabled = true;
 
-        await WaitUntilAsync(() => viewModel.StatusText == "Idle 12/15 min");
+        await WaitUntilAsync(() => viewModel.StatusText == "Inactivo 12/15 min");
     }
 
     [Fact]
@@ -237,7 +245,7 @@ public sealed class MainWindowViewModelTests
 
         viewModel.IsEnabled = true;
 
-        await WaitUntilAsync(() => viewModel.StatusText == "Blocked: Audio is playing");
+        await WaitUntilAsync(() => viewModel.StatusText == "Bloqueado: Audio is playing");
     }
 
     [Fact]
@@ -273,6 +281,8 @@ public sealed class MainWindowViewModelTests
 
         Assert.Null(exception);
         Assert.True(viewModel.IsEnabled);
+        Assert.Equal("No se pudo guardar la configuracion", viewModel.SettingsWarningText);
+        Assert.True(viewModel.IsSettingsWarningVisible);
     }
 
     private static async Task WaitUntilAsync(Func<bool> predicate)

@@ -26,8 +26,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool _disposed;
     private bool _resumeAfterTemporaryDisable;
     private bool _isEnabled;
-    private string _statusText = "Off";
-    private string _trayStatusText = "Smart Sleep Shutdown - OFF";
+    private string _statusText = "Desactivado";
+    private string _trayStatusText = "Smart Sleep Shutdown - DESACTIVADO";
+    private string _settingsWarningText = string.Empty;
     private string _startTimeText = "01:00";
     private int _idleThresholdMinutes = 15;
     private bool _contextChecksEnabled = true;
@@ -102,6 +103,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         get => _trayStatusText;
         private set => SetField(ref _trayStatusText, value);
     }
+
+    public string SettingsWarningText
+    {
+        get => _settingsWarningText;
+        private set
+        {
+            if (SetField(ref _settingsWarningText, value))
+            {
+                OnPropertyChanged(nameof(IsSettingsWarningVisible));
+            }
+        }
+    }
+
+    public bool IsSettingsWarningVisible => !string.IsNullOrWhiteSpace(SettingsWarningText);
 
     public string StartTimeText
     {
@@ -207,7 +222,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _decisionEngine.CancelAndRequireRearm();
         IsCountdownActive = false;
         CountdownSecondsRemaining = 0;
-        StatusText = "Cancelled by activity";
+        StatusText = "Cancelado por actividad";
     }
 
     public void DisableUntilTomorrow()
@@ -218,7 +233,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _resumeAfterTemporaryDisable = IsEnabled;
         TemporarilyDisabledUntil = new DateTimeOffset(now.Date.AddDays(1), now.Offset);
         IsEnabled = false;
-        StatusText = "Off until tomorrow";
+        StatusText = "Pausado hasta manana";
 
         if (_idleDetector is not null || _contextDetector is not null || _shutdownExecutor is not null)
         {
@@ -232,7 +247,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         ClearTemporaryDisable();
         IsEnabled = true;
-        StatusText = "Monitoring";
+        StatusText = "Vigilando";
     }
 
     public void RefreshTemporaryDisableStatus()
@@ -251,7 +266,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
         else
         {
-            StatusText = "Off";
+            StatusText = "Desactivado";
             UpdateTrayStatus();
         }
     }
@@ -270,7 +285,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void StartMonitoring()
     {
-        StatusText = "Monitoring";
+        StatusText = "Vigilando";
 
         if (_idleDetector is null || _contextDetector is null || _shutdownExecutor is null || _clock is null)
         {
@@ -291,7 +306,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _decisionEngine.Disable();
         IsCountdownActive = false;
         CountdownSecondsRemaining = 0;
-        StatusText = "Off";
+        StatusText = "Desactivado";
     }
 
     private void StartTemporaryDisableWatcher()
@@ -343,7 +358,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                     {
                         IsCountdownActive = false;
                         CountdownSecondsRemaining = 0;
-                        StatusText = "Use HH:mm start time";
+                        StatusText = "Usa hora HH:mm";
                     });
                     await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken).ConfigureAwait(false);
                     continue;
@@ -356,8 +371,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 {
                     var wakeTime = now + delayBeforeEvaluation;
                     ApplyUi(() => StatusText = delayBeforeEvaluation > MonitoringSchedule.PrecheckLeadTime
-                        ? $"Sleeping until {wakeTime:HH:mm}"
-                        : $"Armed for {settings.StartTime:HH:mm}");
+                        ? $"Durmiendo hasta {wakeTime:HH:mm}"
+                        : $"Listo para {settings.StartTime:HH:mm}");
                     await Task.Delay(delayBeforeEvaluation, cancellationToken).ConfigureAwait(false);
                     continue;
                 }
@@ -376,7 +391,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 _decisionEngine.CancelAndRequireRearm();
                 IsCountdownActive = false;
                 CountdownSecondsRemaining = 0;
-                StatusText = "Monitoring paused";
+                StatusText = "Vigilancia pausada";
             });
         }
     }
@@ -401,7 +416,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             {
                 IsCountdownActive = false;
                 CountdownSecondsRemaining = 0;
-                StatusText = "Blocked by detector";
+                StatusText = "Bloqueado: detector";
             });
             return TimeSpan.FromMinutes(1);
         }
@@ -420,7 +435,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 {
                     IsCountdownActive = true;
                     CountdownSecondsRemaining = (int)settings.WarningDuration.TotalSeconds;
-                    StatusText = "PC will shut down in 60 seconds";
+                    StatusText = "Apagado en 60 segundos";
                 });
                 break;
 
@@ -429,7 +444,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 {
                     IsCountdownActive = false;
                     CountdownSecondsRemaining = 0;
-                    StatusText = "Monitoring";
+                    StatusText = "Vigilando";
                 });
                 break;
 
@@ -438,7 +453,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 {
                     IsCountdownActive = false;
                     CountdownSecondsRemaining = 0;
-                    StatusText = "Shutting down";
+                    StatusText = "Apagando";
                 });
                 await _shutdownExecutor.ShutdownNowAsync(cancellationToken).ConfigureAwait(false);
                 break;
@@ -464,7 +479,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             var remaining = settings.WarningDuration - elapsed;
             IsCountdownActive = true;
             CountdownSecondsRemaining = Math.Max(0, (int)Math.Ceiling(remaining.TotalSeconds));
-            StatusText = "PC will shut down in 60 seconds";
+            StatusText = "Apagado en 60 segundos";
             return;
         }
 
@@ -473,20 +488,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
         if (!MonitoringSchedule.IsInsideEvaluationWindow(settings, now))
         {
-            StatusText = $"Waiting until {settings.StartTime:HH:mm}";
+            StatusText = $"Esperando hasta {settings.StartTime:HH:mm}";
         }
         else if (settings.ContextChecksEnabled && context.HasBlockingContext)
         {
             var reason = context.Blockers.FirstOrDefault()?.Description;
             StatusText = string.IsNullOrWhiteSpace(reason)
-                ? "Blocked by activity"
-                : $"Blocked: {reason}";
+                ? "Bloqueado por actividad"
+                : $"Bloqueado: {reason}";
         }
         else
         {
             StatusText = idle.IdleDuration > settings.IdleThreshold
-                ? "Ready"
-                : $"Idle {(int)idle.IdleDuration.TotalMinutes}/{(int)settings.IdleThreshold.TotalMinutes} min";
+                ? "Listo para avisar"
+                : $"Inactivo {(int)idle.IdleDuration.TotalMinutes}/{(int)settings.IdleThreshold.TotalMinutes} min";
         }
     }
 
@@ -502,7 +517,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             _decisionEngine.CancelAndRequireRearm();
             IsCountdownActive = false;
             CountdownSecondsRemaining = 0;
-            StatusText = "Monitoring";
+            StatusText = "Vigilando";
         }
 
         if (IsEnabled && !IsTemporarilyDisabled)
@@ -551,7 +566,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
         else if (IsTemporarilyDisabled)
         {
-            StatusText = "Off until tomorrow";
+            StatusText = "Pausado hasta manana";
             StartTemporaryDisableWatcher();
         }
     }
@@ -572,12 +587,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 ContextChecksEnabled,
                 TemporarilyDisabledUntil,
                 _resumeAfterTemporaryDisable));
+            SettingsWarningText = string.Empty;
         }
         catch (IOException)
         {
+            SettingsWarningText = "No se pudo guardar la configuracion";
         }
         catch (UnauthorizedAccessException)
         {
+            SettingsWarningText = "No se pudo guardar la configuracion";
         }
     }
 
@@ -596,15 +614,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         if (IsTemporarilyDisabled)
         {
-            TrayStatusText = "Smart Sleep Shutdown - Paused until tomorrow";
+            TrayStatusText = "Smart Sleep Shutdown - PAUSADO hasta manana";
         }
         else if (IsEnabled)
         {
-            TrayStatusText = "Smart Sleep Shutdown - ON";
+            TrayStatusText = "Smart Sleep Shutdown - ACTIVO";
         }
         else
         {
-            TrayStatusText = "Smart Sleep Shutdown - OFF";
+            TrayStatusText = "Smart Sleep Shutdown - DESACTIVADO";
         }
     }
 
