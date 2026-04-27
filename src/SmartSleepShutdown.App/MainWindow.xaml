@@ -9,6 +9,7 @@
         MinHeight="540"
         ResizeMode="CanMinimize"
         WindowStartupLocation="CenterScreen"
+        Icon="{StaticResource AppIconImage}"
         Background="#EEF3F8">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
@@ -69,7 +70,7 @@
                                    VerticalAlignment="Center" />
                         <Ellipse Width="12"
                                  Height="12"
-                                 Fill="#16A34A"
+                                 Fill="{Binding HeaderStatusBrush}"
                                  Stroke="#FFFFFF"
                                  StrokeThickness="2"
                                  HorizontalAlignment="Right"
@@ -134,6 +135,12 @@
                           IsChecked="{Binding IsEnabled, Mode=TwoWay}"
                           Content="{Binding IsEnabled, Converter={x:Static viewModels:BooleanBoxes.OnOffConverter}}"
                           AutomationProperties.Name="Activar o desactivar apagado inteligente" />
+
+            <TextBlock Text="{Binding ScheduleSummaryText}"
+                       Margin="2,-6,0,14"
+                       Foreground="#475569"
+                       FontSize="12"
+                       TextWrapping="Wrap" />
 
             <Grid>
                 <Grid.ColumnDefinitions>

@@ -66,6 +66,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         {
             if (SetField(ref _isEnabled, value))
             {
+                OnPropertyChanged(nameof(HeaderStatusBrush));
+
                 if (value && IsTemporarilyDisabled)
                 {
                     ClearTemporaryDisable();
@@ -104,6 +106,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         private set => SetField(ref _trayStatusText, value);
     }
 
+    public string HeaderStatusBrush => IsTemporarilyDisabled
+        ? "#F59E0B"
+        : IsEnabled
+            ? "#16A34A"
+            : "#64748B";
+
     public string SettingsWarningText
     {
         get => _settingsWarningText;
@@ -125,6 +133,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         {
             if (SetField(ref _startTimeText, value))
             {
+                OnPropertyChanged(nameof(ScheduleSummaryText));
                 ApplySettingsChange();
                 SaveSettings();
             }
@@ -139,6 +148,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             var clamped = Math.Clamp(value, 1, 240);
             if (SetField(ref _idleThresholdMinutes, clamped))
             {
+                OnPropertyChanged(nameof(ScheduleSummaryText));
                 ApplySettingsChange();
                 SaveSettings();
             }
@@ -152,9 +162,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         {
             if (SetField(ref _contextChecksEnabled, value))
             {
+                OnPropertyChanged(nameof(ScheduleSummaryText));
                 ApplySettingsChange();
                 SaveSettings();
             }
+        }
+    }
+
+    public string ScheduleSummaryText
+    {
+        get
+        {
+            var start = TimeOnly.TryParse(StartTimeText, out var parsedStart)
+                ? parsedStart.ToString("HH:mm")
+                : "HH:mm";
+            var context = ContextChecksEnabled ? "Contexto on" : "Contexto off";
+            return $"Activo desde {start} hasta 06:00 | Inactividad {IdleThresholdMinutes} min | {context}";
         }
     }
 
@@ -186,6 +209,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             if (SetField(ref _temporarilyDisabledUntil, value))
             {
                 OnPropertyChanged(nameof(IsTemporarilyDisabled));
+                OnPropertyChanged(nameof(HeaderStatusBrush));
                 _disableUntilTomorrowCommand.RaiseCanExecuteChanged();
                 UpdateTrayStatus();
                 SaveSettings();
@@ -554,8 +578,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(StartTimeText));
         OnPropertyChanged(nameof(IdleThresholdMinutes));
         OnPropertyChanged(nameof(ContextChecksEnabled));
+        OnPropertyChanged(nameof(ScheduleSummaryText));
         OnPropertyChanged(nameof(TemporarilyDisabledUntil));
         OnPropertyChanged(nameof(IsTemporarilyDisabled));
+        OnPropertyChanged(nameof(HeaderStatusBrush));
 
         RefreshTemporaryDisableStatus();
         UpdateTrayStatus();
@@ -618,7 +644,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
         else if (IsEnabled)
         {
-            TrayStatusText = "Smart Sleep Shutdown - ACTIVO";
+            TrayStatusText = $"Smart Sleep Shutdown - ACTIVO - {StatusText}";
         }
         else
         {

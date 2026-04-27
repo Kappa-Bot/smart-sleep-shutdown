@@ -41,6 +41,23 @@ public sealed class MainWindowXamlTests
     }
 
     [Fact]
+    public void WindowShowsDynamicScheduleSummary()
+    {
+        var xaml = File.ReadAllText(FindProjectFile("src", "SmartSleepShutdown.App", "MainWindow.xaml"));
+
+        Assert.Contains("ScheduleSummaryText", xaml);
+    }
+
+    [Fact]
+    public void WindowUsesBrandedIconAndDynamicStatusDot()
+    {
+        var xaml = File.ReadAllText(FindProjectFile("src", "SmartSleepShutdown.App", "MainWindow.xaml"));
+
+        Assert.Contains("Icon=\"{StaticResource AppIconImage}\"", xaml);
+        Assert.Contains("Fill=\"{Binding HeaderStatusBrush}\"", xaml);
+    }
+
+    [Fact]
     public void SettingsTextBoxesCommitOnLostFocusToAvoidRestartingMonitorPerKeystroke()
     {
         var xaml = File.ReadAllText(FindProjectFile("src", "SmartSleepShutdown.App", "MainWindow.xaml"));

@@ -38,6 +38,7 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(new TimeOnly(2, 30), settings.StartTime);
         Assert.Equal(TimeSpan.FromMinutes(20), settings.IdleThreshold);
         Assert.False(settings.ContextChecksEnabled);
+        Assert.Equal("Activo desde 02:30 hasta 06:00 | Inactividad 20 min | Contexto off", viewModel.ScheduleSummaryText);
     }
 
     [Fact]
@@ -103,7 +104,7 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.IsEnabled);
         Assert.False(viewModel.IsTemporarilyDisabled);
         Assert.Null(viewModel.TemporarilyDisabledUntil);
-        Assert.Equal("Smart Sleep Shutdown - ACTIVO", viewModel.TrayStatusText);
+        Assert.Equal("Smart Sleep Shutdown - ACTIVO - Vigilando", viewModel.TrayStatusText);
     }
 
     [Fact]
@@ -135,6 +136,21 @@ public sealed class MainWindowViewModelTests
 
         viewModel.DisableUntilTomorrow();
         Assert.Equal(TrayVisualState.SuspendedToday, TrayVisualStateResolver.Resolve(viewModel));
+    }
+
+    [Fact]
+    public void HeaderStatusBrushReflectsVisualState()
+    {
+        var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 22, 30, 0, TimeSpan.Zero));
+        var viewModel = new MainWindowViewModel(clock: clock);
+
+        Assert.Equal("#64748B", viewModel.HeaderStatusBrush);
+
+        viewModel.IsEnabled = true;
+        Assert.Equal("#16A34A", viewModel.HeaderStatusBrush);
+
+        viewModel.DisableUntilTomorrow();
+        Assert.Equal("#F59E0B", viewModel.HeaderStatusBrush);
     }
 
     [Fact]
@@ -230,6 +246,20 @@ public sealed class MainWindowViewModelTests
         viewModel.IsEnabled = true;
 
         await WaitUntilAsync(() => viewModel.StatusText == "Inactivo 12/15 min");
+        Assert.Equal("Smart Sleep Shutdown - ACTIVO - Inactivo 12/15 min", viewModel.TrayStatusText);
+    }
+
+    [Fact]
+    public void ScheduleSummaryUpdatesWhenSettingsChange()
+    {
+        var viewModel = new MainWindowViewModel
+        {
+            StartTimeText = "03:10",
+            IdleThresholdMinutes = 22,
+            ContextChecksEnabled = false
+        };
+
+        Assert.Equal("Activo desde 03:10 hasta 06:00 | Inactividad 22 min | Contexto off", viewModel.ScheduleSummaryText);
     }
 
     [Fact]
