@@ -20,6 +20,7 @@ The app should feel like a native Windows tray utility:
 - Idle threshold: 15 minutes.
 - Warning countdown: 60 seconds.
 - Context checks: enabled.
+- Soft context override: after one hour of user idle, fullscreen/audio/high CPU/known-process blockers no longer veto shutdown.
 
 ## Important Behaviors
 
@@ -28,6 +29,8 @@ The app should feel like a native Windows tray utility:
 - Temporary pause lasts until local midnight.
 - Closing the window hides it to tray; tray Exit closes the process.
 - During the 60 second warning, keyboard/mouse input cancels immediately. Context blockers are enforced at the final re-check so transient audio/CPU/fullscreen noise cannot restart warning loops forever.
+- `DetectorFailure` is a hard blocker. Fullscreen app, known process, audio, and high CPU are soft blockers; this allows shutdown after the user falls asleep on a game home screen.
+- Local install registers `SmartSleepShutdown-NightWake` in Task Scheduler at `00:30` with `WakeToRun`, plus the existing Run key. `--startup` is a background launch and must not activate an already-running primary window.
 - UI language is Spanish; keep new UX strings Spanish.
 - Installer uses `--exit` to request graceful shutdown before publishing.
 

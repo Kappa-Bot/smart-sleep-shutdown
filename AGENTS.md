@@ -9,6 +9,7 @@ This repository is optimized for future AI agents. Keep the app focused: one Win
 - Cancel warning on keyboard or mouse activity.
 - Re-check idle and blocking context immediately before shutdown.
 - Do not restart the warning for transient context blockers during countdown; final re-check blocks shutdown if the blocker persists.
+- Soft context blockers, including fullscreen/game/audio/high CPU/known process, must not veto shutdown after one hour of user idle. `DetectorFailure` remains a hard blocker.
 - Never use `/f`; the fixed command is `shutdown.exe /s /t 0`.
 - Detector failures block shutdown, except expected optional-audio absence.
 - Do not restart warning loops after cancel until idle has reset below threshold.
@@ -46,6 +47,7 @@ Get-Process -Name SmartSleepShutdown
 - Keep UI minimal: status, ON/OFF, start time, idle threshold, context checks, countdown cancel.
 - Keep UI language Spanish unless user explicitly asks otherwise.
 - Avoid background loops. Prefer scheduled one-shot delays and cancellation.
+- Preserve the installer wake task `SmartSleepShutdown-NightWake` at `00:30` with `WakeToRun`; Run key alone cannot wake a suspended PC.
 - Keep tray behavior predictable: close hides, Exit exits, second launch opens existing instance.
 - Preserve project isolation under this root folder.
 

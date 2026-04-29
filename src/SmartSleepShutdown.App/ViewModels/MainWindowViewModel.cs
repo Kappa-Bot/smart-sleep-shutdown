@@ -514,7 +514,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         {
             StatusText = $"Esperando hasta {settings.StartTime:HH:mm}";
         }
-        else if (settings.ContextChecksEnabled && context.HasBlockingContext)
+        else if (ContextBlockingPolicy.BlocksShutdown(settings, idle, context))
         {
             var reason = context.Blockers.FirstOrDefault()?.Description;
             StatusText = string.IsNullOrWhiteSpace(reason)

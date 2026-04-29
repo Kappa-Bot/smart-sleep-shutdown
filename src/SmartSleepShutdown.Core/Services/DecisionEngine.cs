@@ -107,12 +107,7 @@ public sealed class DecisionEngine
         return MonitoringSchedule.IsInsideEvaluationWindow(settings, now)
             && idle.IdleDuration > settings.IdleThreshold
             && !idle.InputDetected
-            && !HasBlockingContext(settings, context);
-    }
-
-    private static bool HasBlockingContext(SleepShutdownSettings settings, ContextSnapshot context)
-    {
-        return settings.ContextChecksEnabled && context.HasBlockingContext;
+            && !ContextBlockingPolicy.BlocksShutdown(settings, idle, context);
     }
 
     private DecisionResult Current(ShutdownDecisionAction action)

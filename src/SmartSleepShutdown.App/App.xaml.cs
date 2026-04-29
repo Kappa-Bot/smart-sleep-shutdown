@@ -12,7 +12,7 @@ public partial class App : System.Windows.Application
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         _singleInstance = SingleInstanceCoordinator.CreateDefault();
-        if (e.Args.Any(arg => string.Equals(arg, "--exit", StringComparison.OrdinalIgnoreCase)))
+        if (StartupIntent.IsExitRequest(e.Args))
         {
             if (!_singleInstance.IsPrimaryInstance)
             {
@@ -27,7 +27,11 @@ public partial class App : System.Windows.Application
 
         if (!_singleInstance.IsPrimaryInstance)
         {
-            _singleInstance.SignalPrimaryInstance();
+            if (StartupIntent.ShouldActivateExistingPrimary(e.Args))
+            {
+                _singleInstance.SignalPrimaryInstance();
+            }
+
             _singleInstance.Dispose();
             _singleInstance = null;
             Shutdown();
@@ -43,7 +47,7 @@ public partial class App : System.Windows.Application
             Shutdown();
         }));
 
-        if (!e.Args.Any(arg => string.Equals(arg, "--startup", StringComparison.OrdinalIgnoreCase)))
+        if (StartupIntent.ShouldShowMainWindow(e.Args))
         {
             mainWindow.Show();
         }

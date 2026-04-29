@@ -119,8 +119,9 @@ public sealed class DecisionEngineTests
     {
         var engine = new DecisionEngine();
         var context = ContextSnapshot.Blocked(new BlockingContext(BlockingContextType.AudioPlaying, "Audio playing"));
+        var now = ActiveTime.AddMinutes(16);
 
-        var result = engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromHours(2)), context, ActiveTime);
+        var result = engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromMinutes(16), now), context, now);
 
         result.Action.ShouldBe(ShutdownDecisionAction.None);
         result.State.ShouldBe(DecisionState.Monitoring);
@@ -159,11 +160,11 @@ public sealed class DecisionEngineTests
     }
 
     [Fact]
-    public void WarningExpiryWithBlockerCancelsShutdown()
+    public void WarningExpiryWithDetectorFailureCancelsShutdown()
     {
         var engine = new DecisionEngine();
         engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromHours(2)), ContextSnapshot.Clear, ActiveTime);
-        var context = ContextSnapshot.Blocked(new BlockingContext(BlockingContextType.FullScreenApp, "Fullscreen window"));
+        var context = ContextSnapshot.Blocked(new BlockingContext(BlockingContextType.DetectorFailure, "Probe failed"));
 
         var result = engine.Evaluate(
             EnabledSettings,
@@ -172,6 +173,36 @@ public sealed class DecisionEngineTests
             ActiveTime.AddSeconds(60));
 
         result.Action.ShouldBe(ShutdownDecisionAction.CancelWarning);
+        result.State.ShouldBe(DecisionState.Monitoring);
+    }
+
+    [Fact]
+    public void LongIdleOverridesSoftGameMenuContext()
+    {
+        var engine = new DecisionEngine();
+        var context = ContextSnapshot.Blocked(
+            new BlockingContext(BlockingContextType.FullScreenApp, "Game menu is fullscreen"),
+            new BlockingContext(BlockingContextType.KnownProcess, "Steam is running"),
+            new BlockingContext(BlockingContextType.AudioPlaying, "Menu music is playing"),
+            new BlockingContext(BlockingContextType.HighCpu, "Game menu is using CPU"));
+        var now = ActiveTime.AddHours(1);
+
+        var result = engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromHours(1), now), context, now);
+
+        result.Action.ShouldBe(ShutdownDecisionAction.StartWarning);
+        result.State.ShouldBe(DecisionState.Warning);
+    }
+
+    [Fact]
+    public void DetectorFailureStillBlocksAfterLongIdle()
+    {
+        var engine = new DecisionEngine();
+        var context = ContextSnapshot.Blocked(new BlockingContext(BlockingContextType.DetectorFailure, "Probe failed"));
+        var now = ActiveTime.AddHours(2);
+
+        var result = engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromHours(2), now), context, now);
+
+        result.Action.ShouldBe(ShutdownDecisionAction.None);
         result.State.ShouldBe(DecisionState.Monitoring);
     }
 

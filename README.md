@@ -45,18 +45,20 @@ The app avoids constant polling.
 - from start time to `06:00`, it checks intelligently
 - while clearly active, it waits longer between checks
 - near the idle threshold or during countdown, it checks faster
+- the local installer registers a daily `SmartSleepShutdown-NightWake` scheduled task at `00:30` with `WakeToRun`, so Windows can wake the PC from sleep before the shutdown window
 
 The start time can cross midnight. For example, `23:00` means active from `23:00` until `06:00`.
 
 ## Context Checks
 
-When enabled, shutdown is blocked by:
+When enabled, shutdown is delayed by soft context blockers:
 
 - fullscreen foreground window
 - audio output activity
 - sustained high CPU usage
 - known running apps: Teams, Zoom, OBS, Steam, Visual Studio, VS Code, PowerPoint
-- detector failure
+
+Soft blockers prevent shutdown during the first hour of idle. After one hour idle, they no longer veto shutdown; this handles cases like falling asleep on a fullscreen game home screen. Detector failure is the hard blocker and still prevents shutdown.
 
 ## Project Layout
 
@@ -102,9 +104,11 @@ This publishes to `%LOCALAPPDATA%\SmartSleepShutdown` and registers:
 
 ```text
 HKCU\Software\Microsoft\Windows\CurrentVersion\Run\SmartSleepShutdown
+Task Scheduler\SmartSleepShutdown-NightWake
 ```
 
 Startup launches hidden with `--startup`; control stays in the Windows tray.
+The wake task runs daily at `00:30`, wakes the computer when Windows wake timers are allowed, and launches hidden with `--startup`. The installer also attempts to enable wake timers for the current Windows power plan.
 The installer asks the currently installed process to exit gracefully before replacing files.
 
 ## Agent-Friendly Docs
