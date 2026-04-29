@@ -8,6 +8,7 @@ This repository is optimized for future AI agents. Keep the app focused: one Win
 - Always show the 60 second warning before shutdown.
 - Cancel warning on keyboard or mouse activity.
 - Re-check idle and blocking context immediately before shutdown.
+- Do not restart the warning for transient context blockers during countdown; final re-check blocks shutdown if the blocker persists.
 - Never use `/f`; the fixed command is `shutdown.exe /s /t 0`.
 - Detector failures block shutdown, except expected optional-audio absence.
 - Do not restart warning loops after cancel until idle has reset below threshold.

@@ -10,7 +10,7 @@ Windows WPF utility that shuts down the PC only when it is late enough, the user
 - App starts disabled
 - Shutdown command: `shutdown.exe /s /t 0`
 
-The app never shuts down silently. It shows `PC will shut down in 60 seconds`, starts a countdown, cancels on keyboard or mouse input, and re-checks activity/context before executing shutdown.
+The app never shuts down silently. It shows `PC will shut down in 60 seconds`, starts a countdown, cancels on keyboard or mouse input, and re-checks activity/context before executing shutdown. Transient context noise during the countdown does not restart the countdown; a blocker must still be present at the final re-check to stop shutdown.
 
 ## Tray Menu
 

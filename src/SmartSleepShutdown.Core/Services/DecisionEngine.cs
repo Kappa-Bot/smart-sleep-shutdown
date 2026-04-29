@@ -81,13 +81,6 @@ public sealed class DecisionEngine
             return Current(ShutdownDecisionAction.CancelWarning);
         }
 
-        if (HasBlockingContext(settings, context))
-        {
-            _warningStartedAt = null;
-            State = DecisionState.Monitoring;
-            return Current(ShutdownDecisionAction.CancelWarning);
-        }
-
         _warningStartedAt ??= now;
         if (now - _warningStartedAt.Value < settings.WarningDuration)
         {

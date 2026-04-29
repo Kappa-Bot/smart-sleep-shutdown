@@ -176,6 +176,33 @@ public sealed class DecisionEngineTests
     }
 
     [Fact]
+    public void TransientContextDuringWarningDoesNotRestartCountdown()
+    {
+        var engine = new DecisionEngine();
+        engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromHours(2)), ContextSnapshot.Clear, ActiveTime);
+        var transientContext = ContextSnapshot.Blocked(new BlockingContext(BlockingContextType.AudioPlaying, "Brief notification sound"));
+
+        var duringWarning = engine.Evaluate(
+            EnabledSettings,
+            Idle(TimeSpan.FromHours(2), ActiveTime.AddSeconds(1)),
+            transientContext,
+            ActiveTime.AddSeconds(1));
+
+        duringWarning.Action.ShouldBe(ShutdownDecisionAction.None);
+        duringWarning.State.ShouldBe(DecisionState.Warning);
+        duringWarning.WarningStartedAt.ShouldBe(ActiveTime);
+
+        var finalCheck = engine.Evaluate(
+            EnabledSettings,
+            Idle(TimeSpan.FromHours(2), ActiveTime.AddSeconds(60)),
+            ContextSnapshot.Clear,
+            ActiveTime.AddSeconds(60));
+
+        finalCheck.Action.ShouldBe(ShutdownDecisionAction.ShutdownNow);
+        finalCheck.State.ShouldBe(DecisionState.ShutdownIssued);
+    }
+
+    [Fact]
     public void CancelledStateDoesNotRetriggerUntilIdleResets()
     {
         var engine = new DecisionEngine();

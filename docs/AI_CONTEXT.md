@@ -27,6 +27,7 @@ The app should feel like a native Windows tray utility:
 - Invalid start time disarms monitoring and shows `Usa hora HH:mm`.
 - Temporary pause lasts until local midnight.
 - Closing the window hides it to tray; tray Exit closes the process.
+- During the 60 second warning, keyboard/mouse input cancels immediately. Context blockers are enforced at the final re-check so transient audio/CPU/fullscreen noise cannot restart warning loops forever.
 - UI language is Spanish; keep new UX strings Spanish.
 - Installer uses `--exit` to request graceful shutdown before publishing.
 
