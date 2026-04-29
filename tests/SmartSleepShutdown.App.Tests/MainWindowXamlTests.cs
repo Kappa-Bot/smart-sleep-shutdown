@@ -68,6 +68,38 @@ public sealed class MainWindowXamlTests
         Assert.DoesNotContain("IdleThresholdMinutes, UpdateSourceTrigger=PropertyChanged", xaml);
     }
 
+    [Fact]
+    public void WindowUsesScrollViewerToPreventVerticalClipping()
+    {
+        var xaml = File.ReadAllText(FindProjectFile("src", "SmartSleepShutdown.App", "MainWindow.xaml"));
+
+        Assert.Contains("<ScrollViewer", xaml);
+        Assert.Contains("VerticalScrollBarVisibility=\"Auto\"", xaml);
+        Assert.Contains("CanContentScroll=\"False\"", xaml);
+    }
+
+    [Fact]
+    public void FooterUsesGridLayoutToPreventTextButtonOverlap()
+    {
+        var xaml = File.ReadAllText(FindProjectFile("src", "SmartSleepShutdown.App", "MainWindow.xaml"));
+
+        Assert.Contains("x:Name=\"FooterLayout\"", xaml);
+        Assert.Contains("<ColumnDefinition Width=\"*\" />", xaml);
+        Assert.Contains("<ColumnDefinition Width=\"Auto\" />", xaml);
+    }
+
+    [Fact]
+    public void WindowUsesPremiumMinimalVisualSystem()
+    {
+        var xaml = File.ReadAllText(FindProjectFile("src", "SmartSleepShutdown.App", "MainWindow.xaml"));
+
+        Assert.Contains("HeaderGradientBrush", xaml);
+        Assert.Contains("PrimaryToggleStyle", xaml);
+        Assert.Contains("CardStyle", xaml);
+        Assert.Contains("StatusBadgeText", xaml);
+        Assert.Contains("Juego o pantalla completa no bloquea tras 1h sin actividad", xaml);
+    }
+
     private static string FindProjectFile(params string[] pathParts)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

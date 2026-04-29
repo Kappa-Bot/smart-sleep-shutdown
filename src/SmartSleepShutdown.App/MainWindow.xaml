@@ -3,43 +3,178 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:viewModels="clr-namespace:SmartSleepShutdown.App.ViewModels"
         Title="Smart Sleep Shutdown"
-        Width="520"
-        Height="560"
-        MinWidth="500"
-        MinHeight="540"
+        Width="560"
+        Height="640"
+        MinWidth="520"
+        MinHeight="560"
         ResizeMode="CanMinimize"
         WindowStartupLocation="CenterScreen"
         Icon="{StaticResource AppIconImage}"
-        Background="#EEF3F8">
+        Background="#F3F7FB"
+        FontFamily="Segoe UI"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
+        <SolidColorBrush x:Key="CardBackgroundBrush"
+                         Color="#FFFFFF" />
+        <SolidColorBrush x:Key="CardBorderBrush"
+                         Color="#D8E2ED" />
+        <SolidColorBrush x:Key="PrimaryTextBrush"
+                         Color="#0F172A" />
+        <SolidColorBrush x:Key="MutedTextBrush"
+                         Color="#64748B" />
+
+        <LinearGradientBrush x:Key="HeaderGradientBrush"
+                             StartPoint="0,0"
+                             EndPoint="1,1">
+            <GradientStop Color="#0B1423"
+                          Offset="0" />
+            <GradientStop Color="#132F46"
+                          Offset="1" />
+        </LinearGradientBrush>
+
+        <Style x:Key="CardStyle"
+               TargetType="Border">
+            <Setter Property="Background"
+                    Value="{StaticResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush"
+                    Value="{StaticResource CardBorderBrush}" />
+            <Setter Property="BorderThickness"
+                    Value="1" />
+            <Setter Property="CornerRadius"
+                    Value="8" />
+            <Setter Property="Padding"
+                    Value="16" />
+        </Style>
+
+        <Style x:Key="SectionLabelStyle"
+               TargetType="TextBlock">
+            <Setter Property="Foreground"
+                    Value="{StaticResource MutedTextBrush}" />
+            <Setter Property="FontSize"
+                    Value="12" />
+            <Setter Property="FontWeight"
+                    Value="SemiBold" />
+        </Style>
+
+        <Style x:Key="HelpTextStyle"
+               TargetType="TextBlock">
+            <Setter Property="Foreground"
+                    Value="#526173" />
+            <Setter Property="FontSize"
+                    Value="12" />
+            <Setter Property="TextWrapping"
+                    Value="Wrap" />
+        </Style>
+
         <Style TargetType="TextBox">
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="BorderBrush" Value="#CAD5E2" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Height"
+                    Value="36" />
+            <Setter Property="Padding"
+                    Value="10,6" />
+            <Setter Property="FontSize"
+                    Value="14" />
+            <Setter Property="Foreground"
+                    Value="{StaticResource PrimaryTextBrush}" />
+            <Setter Property="BorderBrush"
+                    Value="#C8D5E3" />
+            <Setter Property="BorderThickness"
+                    Value="1" />
+            <Setter Property="Background"
+                    Value="#FFFFFF" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
         </Style>
 
         <Style TargetType="Button">
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Padding" Value="14,0" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="BorderBrush" Value="#B9C7D6" />
-            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="Height"
+                    Value="36" />
+            <Setter Property="Padding"
+                    Value="14,0" />
+            <Setter Property="FontWeight"
+                    Value="SemiBold" />
+            <Setter Property="Foreground"
+                    Value="#0F172A" />
+            <Setter Property="BorderBrush"
+                    Value="#B8C6D6" />
+            <Setter Property="Background"
+                    Value="#FFFFFF" />
         </Style>
 
-        <Style TargetType="ToggleButton">
-            <Setter Property="Height" Value="48" />
-            <Setter Property="FontSize" Value="16" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#0F172A" />
-            <Setter Property="Background" Value="#E6EDF5" />
-            <Setter Property="BorderBrush" Value="#B9C7D6" />
-            <Setter Property="BorderThickness" Value="1" />
+        <Style x:Key="PrimaryToggleStyle"
+               TargetType="{x:Type ToggleButton}">
+            <Setter Property="Height"
+                    Value="50" />
+            <Setter Property="FontSize"
+                    Value="16" />
+            <Setter Property="FontWeight"
+                    Value="SemiBold" />
+            <Setter Property="Foreground"
+                    Value="#F8FAFC" />
+            <Setter Property="Background"
+                    Value="#334155" />
+            <Setter Property="BorderBrush"
+                    Value="#0F172A" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <Border x:Name="ToggleShell"
+                                CornerRadius="8"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1"
+                                Padding="6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Width="34"
+                                        Height="34"
+                                        CornerRadius="7"
+                                        Background="#F8FAFC"
+                                        Margin="0,0,10,0">
+                                    <Ellipse Width="12"
+                                             Height="12"
+                                             Fill="{Binding HeaderStatusBrush}"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center" />
+                                </Border>
+
+                                <ContentPresenter Grid.Column="1"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked"
+                                     Value="True">
+                                <Setter TargetName="ToggleShell"
+                                        Property="Background"
+                                        Value="#166534" />
+                                <Setter TargetName="ToggleShell"
+                                        Property="BorderBrush"
+                                        Value="#14532D" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver"
+                                     Value="True">
+                                <Setter TargetName="ToggleShell"
+                                        Property="BorderBrush"
+                                        Value="#38BDF8" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled"
+                                     Value="False">
+                                <Setter Property="Opacity"
+                                        Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -52,14 +187,19 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
-                Background="#102033"
-                Padding="22,20">
-            <DockPanel LastChildFill="True">
-                <Border Width="52"
-                        Height="52"
-                        CornerRadius="12"
+                Background="{StaticResource HeaderGradientBrush}"
+                Padding="24,22">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Border Width="54"
+                        Height="54"
+                        CornerRadius="8"
                         Background="#F8FAFC"
-                        DockPanel.Dock="Left"
                         Margin="0,0,14,0">
                     <Grid>
                         <TextBlock Text="SS"
@@ -79,200 +219,239 @@
                     </Grid>
                 </Border>
 
-                <StackPanel>
+                <StackPanel Grid.Column="1"
+                            VerticalAlignment="Center">
                     <TextBlock Text="Smart Sleep Shutdown"
                                Foreground="#F8FAFC"
-                               FontSize="23"
-                               FontWeight="SemiBold" />
-                    <TextBlock Text="Guardian nocturno para apagar solo cuando es seguro"
-                               Foreground="#B8C6D6"
-                               FontSize="13"
-                               Margin="0,3,0,0" />
-                </StackPanel>
-            </DockPanel>
-        </Border>
-
-        <StackPanel Grid.Row="1"
-                    Margin="22,20,22,12">
-            <Border Background="#FFFFFF"
-                    BorderBrush="#D9E2EC"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="16">
-                <StackPanel>
-                    <TextBlock Text="Estado"
-                               Foreground="#64748B"
-                               FontSize="12"
-                               FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding StatusText}"
-                               Margin="0,3,0,0"
                                FontSize="24"
-                               FontWeight="SemiBold"
-                               Foreground="#0F172A"
-                               AutomationProperties.LiveSetting="Polite" />
-                    <TextBlock Text="No apaga sin aviso. Mueve el raton o pulsa una tecla para cancelar."
-                               Margin="0,6,0,0"
-                               Foreground="#475569"
-                               FontSize="12"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="Guardian nocturno. Avisa, re-checkea y apaga solo si es seguro."
+                               Foreground="#BFD0E4"
+                               FontSize="13"
+                               Margin="0,4,0,0"
                                TextWrapping="Wrap" />
-                    <Border Margin="0,10,0,0"
-                            Padding="10,8"
-                            CornerRadius="6"
-                            Background="#FEF2F2"
-                            BorderBrush="#FCA5A5"
-                            BorderThickness="1"
-                            Visibility="{Binding IsSettingsWarningVisible, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="{Binding SettingsWarningText}"
-                                   Foreground="#991B1B"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   TextWrapping="Wrap" />
-                    </Border>
                 </StackPanel>
-            </Border>
-
-            <ToggleButton Margin="0,14,0,14"
-                          IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                          Content="{Binding IsEnabled, Converter={x:Static viewModels:BooleanBoxes.OnOffConverter}}"
-                          AutomationProperties.Name="Activar o desactivar apagado inteligente" />
-
-            <TextBlock Text="{Binding ScheduleSummaryText}"
-                       Margin="2,-6,0,14"
-                       Foreground="#475569"
-                       FontSize="12"
-                       TextWrapping="Wrap" />
-
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="Hora de inicio"
-                               FontWeight="SemiBold"
-                               Foreground="#0F172A" />
-                    <TextBox Margin="0,6,0,0"
-                             Text="{Binding StartTimeText, UpdateSourceTrigger=LostFocus}"
-                             AutomationProperties.Name="Hora de inicio" />
-                    <TextBlock Text="Formato 24h, por ejemplo 01:00"
-                               Margin="0,5,0,0"
-                               Foreground="#64748B"
-                               FontSize="12" />
-                </StackPanel>
-
-                <StackPanel Grid.Column="2">
-                    <TextBlock Text="Inactividad"
-                               FontWeight="SemiBold"
-                               Foreground="#0F172A" />
-                    <TextBox Margin="0,6,0,0"
-                             Text="{Binding IdleThresholdMinutes, UpdateSourceTrigger=LostFocus}"
-                             AutomationProperties.Name="Minutos de inactividad" />
-                    <TextBlock Text="Minutos antes de avisar"
-                               Margin="0,5,0,0"
-                               Foreground="#64748B"
-                               FontSize="12" />
-                </StackPanel>
-            </Grid>
-
-            <Border Margin="0,16,0,0"
-                    Background="#FFFFFF"
-                    BorderBrush="#D9E2EC"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="14">
-                <DockPanel LastChildFill="True">
-                    <CheckBox DockPanel.Dock="Left"
-                              Margin="0,2,12,0"
-                              IsChecked="{Binding ContextChecksEnabled, Mode=TwoWay}"
-                              AutomationProperties.Name="Activar comprobaciones de contexto" />
-                    <StackPanel>
-                        <TextBlock Text="Comprobaciones de contexto"
-                                   FontWeight="SemiBold"
-                                   Foreground="#0F172A" />
-                        <TextBlock Text="Bloquea el apagado si hay audio, pantalla completa, CPU alta o apps importantes."
-                                   Margin="0,4,0,0"
-                                   Foreground="#64748B"
-                                   FontSize="12"
-                                   TextWrapping="Wrap" />
-                    </StackPanel>
-                </DockPanel>
-            </Border>
-
-            <Grid Margin="0,14,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Border Grid.Column="0"
-                        Background="#ECFDF5"
-                        BorderBrush="#BBF7D0"
-                        BorderThickness="1"
-                        CornerRadius="7"
-                        Padding="10">
-                    <TextBlock Text="1. Avisa 60 segundos"
-                               Foreground="#14532D"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               TextWrapping="Wrap" />
-                </Border>
 
                 <Border Grid.Column="2"
-                        Background="#EFF6FF"
-                        BorderBrush="#BFDBFE"
+                        Background="#1E293B"
+                        BorderBrush="#334155"
                         BorderThickness="1"
-                        CornerRadius="7"
-                        Padding="10">
-                    <TextBlock Text="2. Cancela con actividad"
-                               Foreground="#1E3A8A"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               TextWrapping="Wrap" />
+                        CornerRadius="8"
+                        Padding="10,7"
+                        VerticalAlignment="Center"
+                        Margin="14,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="9"
+                                 Height="9"
+                                 Fill="{Binding HeaderStatusBrush}"
+                                 Margin="0,0,7,0"
+                                 VerticalAlignment="Center" />
+                        <TextBlock x:Name="StatusBadgeText"
+                                   Text="{Binding StatusText}"
+                                   Foreground="#E2E8F0"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   MaxWidth="150"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      CanContentScroll="False">
+            <StackPanel Margin="24,18,24,14">
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Estado"
+                                   Style="{StaticResource SectionLabelStyle}" />
+                        <TextBlock Text="{Binding StatusText}"
+                                   Margin="0,4,0,0"
+                                   FontSize="26"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                   TextWrapping="Wrap"
+                                   AutomationProperties.LiveSetting="Polite" />
+                        <TextBlock Text="No apaga sin aviso. Mueve el raton o pulsa una tecla para cancelar."
+                                   Margin="0,7,0,0"
+                                   Style="{StaticResource HelpTextStyle}" />
+                        <Border Margin="0,11,0,0"
+                                Padding="10,8"
+                                CornerRadius="6"
+                                Background="#FEF2F2"
+                                BorderBrush="#FCA5A5"
+                                BorderThickness="1"
+                                Visibility="{Binding IsSettingsWarningVisible, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{Binding SettingsWarningText}"
+                                       Foreground="#991B1B"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="Wrap" />
+                        </Border>
+                    </StackPanel>
                 </Border>
 
-                <Border Grid.Column="4"
-                        Background="#F8FAFC"
-                        BorderBrush="#CBD5E1"
+                <ToggleButton Margin="0,14,0,10"
+                              Style="{StaticResource PrimaryToggleStyle}"
+                              IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                              Content="{Binding IsEnabled, Converter={x:Static viewModels:BooleanBoxes.OnOffConverter}}"
+                              AutomationProperties.Name="Activar o desactivar apagado inteligente" />
+
+                <Border Background="#EAF2FA"
+                        BorderBrush="#D6E4F2"
                         BorderThickness="1"
-                        CornerRadius="7"
-                        Padding="10">
-                    <TextBlock Text="3. Revisa bloqueos"
+                        CornerRadius="8"
+                        Padding="12"
+                        Margin="0,0,0,14">
+                    <TextBlock Text="{Binding ScheduleSummaryText}"
                                Foreground="#334155"
                                FontSize="12"
                                FontWeight="SemiBold"
                                TextWrapping="Wrap" />
                 </Border>
-            </Grid>
-        </StackPanel>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0"
+                            Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Hora de inicio"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource PrimaryTextBrush}" />
+                            <TextBox Margin="0,7,0,0"
+                                     Text="{Binding StartTimeText, UpdateSourceTrigger=LostFocus}"
+                                     AutomationProperties.Name="Hora de inicio" />
+                            <TextBlock Text="Formato 24h, por ejemplo 01:00"
+                                       Margin="0,6,0,0"
+                                       Style="{StaticResource HelpTextStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2"
+                            Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Inactividad"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource PrimaryTextBrush}" />
+                            <TextBox Margin="0,7,0,0"
+                                     Text="{Binding IdleThresholdMinutes, UpdateSourceTrigger=LostFocus}"
+                                     AutomationProperties.Name="Minutos de inactividad" />
+                            <TextBlock Text="Minutos antes de avisar"
+                                       Margin="0,6,0,0"
+                                       Style="{StaticResource HelpTextStyle}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Margin="0,14,0,0"
+                        Style="{StaticResource CardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <CheckBox Grid.Column="0"
+                                  Margin="0,3,12,0"
+                                  IsChecked="{Binding ContextChecksEnabled, Mode=TwoWay}"
+                                  AutomationProperties.Name="Activar comprobaciones de contexto" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Comprobaciones de contexto"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource PrimaryTextBrush}" />
+                            <TextBlock Text="Audio, CPU y pantalla completa protegen al principio. Juego o pantalla completa no bloquea tras 1h sin actividad."
+                                       Margin="0,5,0,0"
+                                       Style="{StaticResource HelpTextStyle}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0"
+                            Background="#ECFDF5"
+                            BorderBrush="#BBF7D0"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="10">
+                        <TextBlock Text="1. Avisa 60 segundos"
+                                   Foreground="#14532D"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap" />
+                    </Border>
+
+                    <Border Grid.Column="2"
+                            Background="#EFF6FF"
+                            BorderBrush="#BFDBFE"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="10">
+                        <TextBlock Text="2. Cancela con actividad"
+                                   Foreground="#1E3A8A"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap" />
+                    </Border>
+
+                    <Border Grid.Column="4"
+                            Background="#F8FAFC"
+                            BorderBrush="#CBD5E1"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="10">
+                        <TextBlock Text="3. Revisa bloqueos"
+                                   Foreground="#334155"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap" />
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
 
         <Border Grid.Row="2"
-                Margin="22,0,22,12"
+                Margin="24,0,24,12"
                 Padding="14"
                 CornerRadius="8"
                 Background="#FFF7ED"
                 BorderBrush="#FDBA74"
                 BorderThickness="1"
                 Visibility="{Binding IsCountdownActive, Converter={StaticResource BoolToVisibility}}">
-            <DockPanel LastChildFill="True">
-                <Button DockPanel.Dock="Right"
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Foreground="#7C2D12"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap">
+                    <Run Text="Apagado en " />
+                    <Run Text="{Binding CountdownSecondsRemaining, Mode=OneWay}" />
+                    <Run Text=" segundos" />
+                </TextBlock>
+                <Button Grid.Column="1"
                         Width="96"
                         Margin="12,0,0,0"
                         Content="Cancelar"
                         Command="{Binding CancelShutdownCommand}"
                         AutomationProperties.Name="Cancelar apagado" />
-                <TextBlock VerticalAlignment="Center"
-                           Foreground="#7C2D12"
-                           FontWeight="SemiBold">
-                    <Run Text="Apagado en " />
-                    <Run Text="{Binding CountdownSecondsRemaining, Mode=OneWay}" />
-                    <Run Text=" segundos" />
-                </TextBlock>
-            </DockPanel>
+            </Grid>
         </Border>
 
         <Border Grid.Row="3"
@@ -280,18 +459,24 @@
                 BorderBrush="#D6E0EA"
                 BorderThickness="1,1,0,0"
                 Padding="18,12">
-            <DockPanel LastChildFill="False">
-                <TextBlock Text="Al cerrar, sigue activo junto al reloj. Icono verde activo. Click izquierdo en el icono para abrir."
+            <Grid x:Name="FooterLayout">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="Al cerrar, sigue activo junto al reloj. Icono verde activo; ambar pausado; gris desactivado. Click izquierdo para abrir."
                            Foreground="#475569"
                            FontSize="12"
                            TextWrapping="Wrap"
-                           DockPanel.Dock="Left" />
-                <Button Content="Pausar hoy"
-                        Margin="16,0,0,0"
+                           VerticalAlignment="Center"
+                           Margin="0,0,14,0" />
+                <Button Grid.Column="1"
+                        Content="Pausar hoy"
                         Command="{Binding DisableUntilTomorrowCommand}"
                         AutomationProperties.Name="Pausar hasta manana"
-                        DockPanel.Dock="Right" />
-            </DockPanel>
+                        VerticalAlignment="Center" />
+            </Grid>
         </Border>
     </Grid>
 </Window>
