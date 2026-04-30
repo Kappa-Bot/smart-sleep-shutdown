@@ -17,6 +17,21 @@ public sealed class StartupIntentTests
     }
 
     [Fact]
+    public void ScheduledCheckIsBackgroundLaunch()
+    {
+        Assert.True(StartupIntent.IsScheduledCheck(["--scheduled-check"]));
+        Assert.True(StartupIntent.IsBackgroundLaunch(["--scheduled-check"]));
+    }
+
+    [Fact]
+    public void ScheduledCheckSignalsExistingPrimaryWithoutOpeningWindow()
+    {
+        Assert.True(StartupIntent.ShouldSignalScheduledCheck(["--scheduled-check"]));
+        Assert.False(StartupIntent.ShouldActivateExistingPrimary(["--scheduled-check"]));
+        Assert.False(StartupIntent.ShouldShowMainWindow(["--scheduled-check"]));
+    }
+
+    [Fact]
     public void NormalSecondLaunchActivatesExistingPrimaryWindow()
     {
         Assert.True(StartupIntent.ShouldActivateExistingPrimary([]));

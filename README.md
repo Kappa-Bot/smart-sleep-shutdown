@@ -45,7 +45,8 @@ The app avoids constant polling.
 - from start time to `06:00`, it checks intelligently
 - while clearly active, it waits longer between checks
 - near the idle threshold or during countdown, it checks faster
-- the local installer registers a daily `SmartSleepShutdown-NightWake` scheduled task at `00:30` with `WakeToRun`, so Windows can wake the PC from sleep before the shutdown window
+- the local installer registers `SmartSleepShutdown-NightWake` at `00:30` with `WakeToRun`
+- the wake task repeats every 5 minutes for 6 hours and launches `--scheduled-check`, so a PC that sleeps again still wakes and re-checks during the shutdown window
 
 The start time can cross midnight. For example, `23:00` means active from `23:00` until `06:00`.
 
@@ -108,7 +109,9 @@ Task Scheduler\SmartSleepShutdown-NightWake
 ```
 
 Startup launches hidden with `--startup`; control stays in the Windows tray.
-The wake task runs daily at `00:30`, wakes the computer when Windows wake timers are allowed, and launches hidden with `--startup`. The installer also attempts to enable wake timers for the current Windows power plan.
+The wake task runs daily at `00:30`, wakes the computer when Windows wake timers are allowed, repeats every 5 minutes for 6 hours, and launches hidden with `--scheduled-check`. If an app instance is already running, the scheduled launch signals it to re-check immediately without opening the window.
+The app also asks Windows to keep the system awake during the 60 second warning countdown so the PC does not go back to sleep before the final shutdown check.
+The installer attempts to enable wake timers for the current Windows power plan.
 The installer asks the currently installed process to exit gracefully before replacing files.
 
 ## Agent-Friendly Docs

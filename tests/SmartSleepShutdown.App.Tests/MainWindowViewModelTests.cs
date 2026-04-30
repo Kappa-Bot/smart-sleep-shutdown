@@ -193,6 +193,27 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task ScheduledCheckRestartsSleepingMonitorAndEvaluatesCurrentTime()
+    {
+        var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 0, 40, 0, TimeSpan.Zero));
+        var viewModel = new MainWindowViewModel(
+            new FakeIdleDetector(() => new IdleSnapshot(clock.Now, TimeSpan.FromHours(2), false)),
+            new ClearContextDetector(),
+            new FakeShutdownExecutor(),
+            clock,
+            action => action());
+
+        viewModel.IsEnabled = true;
+        await WaitUntilAsync(() => viewModel.StatusText == "Listo para 01:00");
+
+        clock.Now = new DateTimeOffset(2026, 4, 25, 1, 30, 0, TimeSpan.Zero);
+        viewModel.RunScheduledCheck();
+
+        await WaitUntilAsync(() => viewModel.IsCountdownActive);
+        Assert.Equal("Apagado en 60 segundos", viewModel.StatusText);
+    }
+
+    [Fact]
     public async Task InvalidStartTimeDisarmsMonitoringInsteadOfUsingDefaultTime()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 1, 0, 0, TimeSpan.Zero));

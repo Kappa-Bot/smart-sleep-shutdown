@@ -274,6 +274,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         StatusText = "Vigilando";
     }
 
+    public void RunScheduledCheck()
+    {
+        RefreshTemporaryDisableStatus();
+
+        if (IsEnabled && !IsTemporarilyDisabled)
+        {
+            StartMonitoring();
+        }
+    }
+
     public void RefreshTemporaryDisableStatus()
     {
         if (TemporarilyDisabledUntil is null || CurrentTime < TemporarilyDisabledUntil.Value)

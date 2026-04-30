@@ -13,6 +13,7 @@ public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _viewModel;
     private readonly TrayIconService _trayIcon;
+    private WindowsSystemSleepBlocker? _sleepBlocker;
     private bool _exitRequested;
 
     public MainWindow()
@@ -48,6 +49,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        StopPreventingSleep();
         _trayIcon.Dispose();
         _viewModel.Dispose();
         base.OnClosed(e);
@@ -71,6 +73,11 @@ public partial class MainWindow : Window
         ShowMainWindow();
     }
 
+    public void RunScheduledCheck()
+    {
+        _viewModel.RunScheduledCheck();
+    }
+
     public void AllowExit()
     {
         _exitRequested = true;
@@ -78,9 +85,19 @@ public partial class MainWindow : Window
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.IsCountdownActive) && _viewModel.IsCountdownActive)
+        if (e.PropertyName != nameof(MainWindowViewModel.IsCountdownActive))
         {
+            return;
+        }
+
+        if (_viewModel.IsCountdownActive)
+        {
+            StartPreventingSleep();
             ShowWarningNotification();
+        }
+        else
+        {
+            StopPreventingSleep();
         }
     }
 
@@ -113,5 +130,16 @@ public partial class MainWindow : Window
         _exitRequested = true;
         Close();
         System.Windows.Application.Current.Shutdown();
+    }
+
+    private void StartPreventingSleep()
+    {
+        _sleepBlocker ??= WindowsSystemSleepBlocker.Start();
+    }
+
+    private void StopPreventingSleep()
+    {
+        _sleepBlocker?.Dispose();
+        _sleepBlocker = null;
     }
 }

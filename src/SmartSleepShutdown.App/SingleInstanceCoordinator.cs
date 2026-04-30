@@ -7,6 +7,7 @@ public sealed class SingleInstanceCoordinator : IDisposable
     private readonly Semaphore _instanceSemaphore;
     private readonly EventWaitHandle _activationEvent;
     private readonly EventWaitHandle _exitEvent;
+    private readonly EventWaitHandle _scheduledCheckEvent;
     private readonly CancellationTokenSource _listenerCancellation = new();
     private bool _disposed;
 
@@ -14,11 +15,13 @@ public sealed class SingleInstanceCoordinator : IDisposable
         Semaphore instanceSemaphore,
         EventWaitHandle activationEvent,
         EventWaitHandle exitEvent,
+        EventWaitHandle scheduledCheckEvent,
         bool isPrimaryInstance)
     {
         _instanceSemaphore = instanceSemaphore;
         _activationEvent = activationEvent;
         _exitEvent = exitEvent;
+        _scheduledCheckEvent = scheduledCheckEvent;
         IsPrimaryInstance = isPrimaryInstance;
     }
 
@@ -31,10 +34,20 @@ public sealed class SingleInstanceCoordinator : IDisposable
         return Create(
             $@"Local\SmartSleepShutdown-{suffix}-Instance",
             $@"Local\SmartSleepShutdown-{suffix}-Activate",
-            $@"Local\SmartSleepShutdown-{suffix}-Exit");
+            $@"Local\SmartSleepShutdown-{suffix}-Exit",
+            $@"Local\SmartSleepShutdown-{suffix}-Check");
     }
 
     public static SingleInstanceCoordinator Create(string instanceName, string activationEventName, string exitEventName)
+    {
+        return Create(instanceName, activationEventName, exitEventName, $"{instanceName}-Check");
+    }
+
+    public static SingleInstanceCoordinator Create(
+        string instanceName,
+        string activationEventName,
+        string exitEventName,
+        string scheduledCheckEventName)
     {
         var instanceSemaphore = new Semaphore(1, 1, instanceName);
         var isPrimaryInstance = instanceSemaphore.WaitOne(0);
@@ -44,8 +57,11 @@ public sealed class SingleInstanceCoordinator : IDisposable
         var exitEvent = isPrimaryInstance
             ? new EventWaitHandle(false, EventResetMode.AutoReset, exitEventName)
             : OpenOrCreateEvent(exitEventName);
+        var scheduledCheckEvent = isPrimaryInstance
+            ? new EventWaitHandle(false, EventResetMode.AutoReset, scheduledCheckEventName)
+            : OpenOrCreateEvent(scheduledCheckEventName);
 
-        return new SingleInstanceCoordinator(instanceSemaphore, activationEvent, exitEvent, isPrimaryInstance);
+        return new SingleInstanceCoordinator(instanceSemaphore, activationEvent, exitEvent, scheduledCheckEvent, isPrimaryInstance);
     }
 
     public void StartActivationListener(Action activate)
@@ -56,6 +72,11 @@ public sealed class SingleInstanceCoordinator : IDisposable
     public void StartExitListener(Action exit)
     {
         StartListener(_exitEvent, exit);
+    }
+
+    public void StartScheduledCheckListener(Action scheduledCheck)
+    {
+        StartListener(_scheduledCheckEvent, scheduledCheck);
     }
 
     public void SignalPrimaryInstance()
@@ -74,6 +95,14 @@ public sealed class SingleInstanceCoordinator : IDisposable
         }
     }
 
+    public void SignalPrimaryScheduledCheck()
+    {
+        if (!IsPrimaryInstance)
+        {
+            _scheduledCheckEvent.Set();
+        }
+    }
+
     public void Dispose()
     {
         if (_disposed)
@@ -86,6 +115,7 @@ public sealed class SingleInstanceCoordinator : IDisposable
         _listenerCancellation.Dispose();
         _activationEvent.Dispose();
         _exitEvent.Dispose();
+        _scheduledCheckEvent.Dispose();
 
         if (IsPrimaryInstance)
         {

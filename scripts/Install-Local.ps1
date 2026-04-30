@@ -54,10 +54,18 @@ New-ItemProperty `
 
 $taskAction = New-ScheduledTaskAction `
     -Execute $exePath `
-    -Argument "--startup"
+    -Argument "--scheduled-check"
 $taskTrigger = New-ScheduledTaskTrigger `
     -Daily `
     -At "00:30"
+$repetitionSource = New-ScheduledTaskTrigger `
+    -Once `
+    -At "00:30" `
+    -RepetitionInterval (New-TimeSpan -Minutes 5) `
+    -RepetitionDuration (New-TimeSpan -Hours 6)
+$taskTrigger.Repetition = $repetitionSource.Repetition
+$taskTrigger.Repetition.Interval = "PT5M"
+$taskTrigger.Repetition.Duration = "PT6H"
 $taskSettings = New-ScheduledTaskSettingsSet `
     -WakeToRun `
     -StartWhenAvailable `

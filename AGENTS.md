@@ -47,7 +47,9 @@ Get-Process -Name SmartSleepShutdown
 - Keep UI minimal: status, ON/OFF, start time, idle threshold, context checks, countdown cancel.
 - Keep UI language Spanish unless user explicitly asks otherwise.
 - Avoid background loops. Prefer scheduled one-shot delays and cancellation.
-- Preserve the installer wake task `SmartSleepShutdown-NightWake` at `00:30` with `WakeToRun`; Run key alone cannot wake a suspended PC.
+- Preserve the installer wake task `SmartSleepShutdown-NightWake` at `00:30` with `WakeToRun`, `--scheduled-check`, 5 minute repetition, and 6 hour duration; Run key alone cannot wake a suspended PC.
+- `--scheduled-check` must signal the existing primary instance to restart monitoring/evaluate now, but must not open the window.
+- Keep Windows awake during the warning countdown; otherwise it may sleep again before `shutdown.exe`.
 - Keep tray behavior predictable: close hides, Exit exits, second launch opens existing instance.
 - Preserve project isolation under this root folder.
 

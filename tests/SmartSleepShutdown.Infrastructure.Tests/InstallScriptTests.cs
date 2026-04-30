@@ -14,6 +14,11 @@ public sealed class InstallScriptTests
         Assert.Contains("-WakeToRun", script);
         Assert.Contains("Register-ScheduledTask", script);
         Assert.Contains("--startup", script);
+        Assert.Contains("--scheduled-check", script);
+        Assert.Contains("Repetition.Interval", script);
+        Assert.Contains("PT5M", script);
+        Assert.Contains("Repetition.Duration", script);
+        Assert.Contains("PT6H", script);
         Assert.Contains("-RunLevel Limited", script);
         Assert.DoesNotContain("LeastPrivilege", script);
         Assert.Contains("powercfg", script);

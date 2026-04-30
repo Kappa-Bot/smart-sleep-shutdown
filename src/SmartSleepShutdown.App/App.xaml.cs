@@ -27,7 +27,11 @@ public partial class App : System.Windows.Application
 
         if (!_singleInstance.IsPrimaryInstance)
         {
-            if (StartupIntent.ShouldActivateExistingPrimary(e.Args))
+            if (StartupIntent.ShouldSignalScheduledCheck(e.Args))
+            {
+                _singleInstance.SignalPrimaryScheduledCheck();
+            }
+            else if (StartupIntent.ShouldActivateExistingPrimary(e.Args))
             {
                 _singleInstance.SignalPrimaryInstance();
             }
@@ -46,6 +50,7 @@ public partial class App : System.Windows.Application
             mainWindow.AllowExit();
             Shutdown();
         }));
+        _singleInstance.StartScheduledCheckListener(() => Dispatcher.Invoke(mainWindow.RunScheduledCheck));
 
         if (StartupIntent.ShouldShowMainWindow(e.Args))
         {
