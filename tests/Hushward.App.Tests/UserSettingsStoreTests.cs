@@ -51,5 +51,27 @@ public sealed class UserSettingsStoreTests
             File.Delete(backupPath);
         }
     }
-}
 
+    [Fact]
+    public void JsonStoreRecoversCorruptLiveFileFromBackup()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.json");
+        var backupPath = $"{path}.bak";
+        var store = new JsonUserSettingsStore(path);
+        var expected = new UserSettingsSnapshot(true, "01:00", 20, true, null, false, true);
+
+        try
+        {
+            File.WriteAllText(path, "{invalid");
+            File.WriteAllText(backupPath, System.Text.Json.JsonSerializer.Serialize(expected));
+
+            Assert.Equal(expected, store.Load());
+            Assert.Equal(expected, store.Load());
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(backupPath);
+        }
+    }
+}

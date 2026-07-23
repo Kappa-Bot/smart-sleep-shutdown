@@ -59,7 +59,11 @@ public sealed class OnboardingViewModel : ObservableObject
     public NightAction Action { get; set; } = NightAction.ShutDown;
     public IReadOnlyList<ActionOption> ActionOptions { get; } =
     [
-        new(NightAction.ShutDown, UiText.ActionShutdown)
+        new(NightAction.ShutDown, UiText.ActionShutdown),
+        new(NightAction.Hibernate, UiText.ActionHibernate),
+        new(NightAction.Sleep, UiText.ActionSleep),
+        new(NightAction.Lock, UiText.ActionLock),
+        new(NightAction.WarnOnly, UiText.ActionWarnOnly)
     ];
     public TimeOnly Earliest { get; set; } = new(1, 0);
     public TimeOnly Latest { get; set; } = new(6, 0);

@@ -1,125 +1,53 @@
 # Hushward
 
-Windows WPF utility that shuts down the PC only when it is late enough, the user is idle, and no blocking activity is detected.
+Hushward es un guardián nocturno local para Windows. Vive en el área de
+notificación, espera una ventana configurada y solo actúa cuando la inactividad
+y las protecciones permiten hacerlo con seguridad.
 
-## Behavior
+## Garantías
 
-- Default start time: `01:00`
-- Default idle threshold: `15` minutes
-- Default warning: `60` seconds
-- App starts disabled
-- Shutdown command: `shutdown.exe /s /t 0`
+- Nunca ejecuta una acción automática sin aviso visible y cancelable.
+- Teclado, ratón o una protección nueva cancelan el aviso.
+- Revalida actividad, contexto y autorización justo antes de actuar.
+- Un detector fallido o evidencia obsoleta bloquea acciones automáticas.
+- Apagar usa exclusivamente `shutdown.exe /s /t 0`; nunca usa `/f`.
+- No hay cuenta, nube, telemetría, servicio permanente ni inspección de contenido.
 
-The app never shuts down silently. It shows `PC will shut down in 60 seconds`, starts a countdown, cancels on keyboard or mouse input, and re-checks activity/context before executing shutdown. Transient context noise during the countdown does not restart the countdown; a blocker must still be present at the final re-check to stop shutdown.
+## Uso
 
-## Tray Menu
+1. Abre Hushward y completa los cuatro pasos.
+2. Elige acción, horario, inactividad y, opcionalmente, activación desde suspensión.
+3. Cierra la ventana. Hushward continúa en el área de notificación.
+4. Usa `Pausar hoy` o desactiva la rutina cuando no quieras que actúe.
 
-The app stays available from the Windows notification area in the lower-right corner.
+La suspensión del PC requiere que la rutina tenga wake habilitado y que Windows
+permita temporizadores de activación. Hushward sincroniza `Hushward-NightWake`
+con el horario real, usa `WakeToRun`, repite cada cinco minutos durante seis
+horas y ejecuta `--scheduled-check` sin abrir la ventana.
 
-Left-click the tray icon to open the app.
+## Desarrollo
 
-Right-click the tray icon to:
-
-- see whether Hushward is `ON`, `OFF`, or paused until tomorrow
-- open the main window
-- activate or deactivate monitoring
-- pause monitoring until the next day
-- exit the app
-
-Closing the window hides it to the tray and shows a short hint so the user knows it is still running. Use `Salir` from the tray menu to close the app.
-
-The tray icon has a status badge:
-
-- green: active
-- amber pause: suspended for today
-- gray: off
-
-Settings are saved locally, including enabled/off state, start time, idle threshold, context checks, and pause-until-tomorrow state.
-
-## Smart Schedule
-
-The app avoids constant polling.
-
-- before the precheck window, it sleeps
-- the precheck window starts 30 minutes before the configured start time
-- from start time to `06:00`, it checks intelligently
-- while clearly active, it waits longer between checks
-- near the idle threshold or during countdown, it checks faster
-- the local installer registers `Hushward-NightWake` at `00:30` with `WakeToRun`
-- the wake task repeats every 5 minutes for 6 hours and launches `--scheduled-check`, so a PC that sleeps again still wakes and re-checks during the shutdown window
-
-The start time can cross midnight. For example, `23:00` means active from `23:00` until `06:00`.
-
-## Context Checks
-
-When enabled, shutdown is delayed by soft context blockers:
-
-- fullscreen foreground window
-- audio output activity
-- sustained high CPU usage
-- known running apps: Teams, Zoom, OBS, Steam, Visual Studio, VS Code, PowerPoint
-
-Soft blockers prevent shutdown during the first hour of idle. After one hour idle, they no longer veto shutdown; this handles cases like falling asleep on a fullscreen game home screen. Detector failure is the hard blocker and still prevents shutdown.
-
-## Project Layout
-
-```text
-smart-sleep-shutdown/
-  Hushward.sln
-  README.md
-  src/
-    Hushward.App/
-    Hushward.Core/
-    Hushward.Infrastructure/
-  tests/
-    Hushward.App.Tests/
-    Hushward.Core.Tests/
-    Hushward.Infrastructure.Tests/
-```
-
-## Build
+Requiere Windows y .NET 10 SDK.
 
 ```powershell
-dotnet build
-```
-
-## Test
-
-```powershell
-dotnet test
-```
-
-## Run
-
-```powershell
-dotnet run --project src/Hushward.App
-```
-
-## Local Install
-
-```powershell
+dotnet run --project .\src\Hushward.App
+.\scripts\Verify-Release.ps1
 .\scripts\Install-Local.ps1
+.\scripts\Package-Hushward.ps1 -Version 1.0.0
 ```
 
-This publishes to `%LOCALAPPDATA%\Hushward` and registers:
+Los instaladores de desarrollo no están firmados. Los artefactos se generan en
+`artifacts\releases` junto con un manifiesto SHA-256.
+
+## Estructura
 
 ```text
-HKCU\Software\Microsoft\Windows\CurrentVersion\Run\Hushward
-Task Scheduler\Hushward-NightWake
+src/Hushward.Core             politica determinista, sin Windows ni IO
+src/Hushward.Application      casos de uso, puertos y snapshot canónico
+src/Hushward.Infrastructure   WinAPI, detectores, energía, tareas y persistencia
+src/Hushward.App              WPF, bandeja y composición
+tests                         pruebas por capa
+docs                          arquitectura, privacidad, UX, operación y release
 ```
 
-Startup launches hidden with `--startup`; control stays in the Windows tray.
-The wake task runs daily at `00:30`, wakes the computer when Windows wake timers are allowed, repeats every 5 minutes for 6 hours, and launches hidden with `--scheduled-check`. If an app instance is already running, the scheduled launch signals it to re-check immediately without opening the window.
-The app also asks Windows to keep the system awake during the 60 second warning countdown so the PC does not go back to sleep before the final shutdown check.
-The installer attempts to enable wake timers for the current Windows power plan.
-The installer asks the currently installed process to exit gracefully before replacing files.
-
-## Agent-Friendly Docs
-
-Future maintainers and AI agents should read:
-
-- `AGENTS.md`
-- `docs/ARCHITECTURE.md`
-- `docs/AI_CONTEXT.md`
-- `docs/UX_GUIDE.md`
-
+Empieza por `AGENTS.md`, `docs/ARCHITECTURE.md` y `docs/AI_CONTEXT.md`.

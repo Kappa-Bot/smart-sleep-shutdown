@@ -43,6 +43,27 @@ public sealed class CoordinatedShutdownExecutorTests
     }
 
     [Fact]
+    public async Task Explicit_action_is_preserved_without_fallback()
+    {
+        var now = new DateTimeOffset(2026, 7, 23, 1, 30, 0, TimeSpan.Zero);
+        var action = new RecordingActionExecutor();
+        var clock = new FakeClock(now);
+        var executor = new CoordinatedShutdownExecutor(
+            new FakeIdleDetector(now),
+            new FakeContextDetector(ContextSnapshot.Clear),
+            clock,
+            () => SleepShutdownSettings.Default with { Enabled = true },
+            action,
+            new RuntimeSnapshotPublisher(NightRuntimeSnapshot.Empty(0, now)),
+            () => NightAction.Hibernate);
+        await executor.StartAsync(TimeSpan.FromSeconds(60), CancellationToken.None);
+
+        await executor.ShutdownNowAsync(CancellationToken.None);
+
+        Assert.Equal([NightAction.Hibernate], action.Calls);
+    }
+
+    [Fact]
     public async Task DisablingDuringWarningInvalidatesCanonicalWarning()
     {
         var now = new DateTimeOffset(2026, 7, 23, 1, 30, 0, TimeSpan.Zero);
@@ -50,7 +71,7 @@ public sealed class CoordinatedShutdownExecutorTests
         var idle = new FakeIdleDetector(now);
         var context = new FakeContextDetector(ContextSnapshot.Clear);
         var snapshots = new RuntimeSnapshotPublisher(NightRuntimeSnapshot.Empty(0, now));
-        MainWindowViewModel? viewModel = null;
+        NightMonitorController? viewModel = null;
         var warning = new CoordinatedShutdownExecutor(
             idle,
             context,
@@ -58,7 +79,7 @@ public sealed class CoordinatedShutdownExecutorTests
             () => viewModel!.CreateSettings(),
             new RecordingActionExecutor(),
             snapshots);
-        using var ownedViewModel = viewModel = new MainWindowViewModel(
+        using var ownedViewModel = viewModel = new NightMonitorController(
             idle,
             context,
             warning,

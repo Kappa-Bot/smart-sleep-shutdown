@@ -83,6 +83,7 @@ public sealed class TrayIconHost : IDisposable
         _menu.Items.Add(new Forms.ToolStripMenuItem(_viewModel.StateLabel) { Enabled = false });
         _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add(new Forms.ToolStripMenuItem(UiText.TrayOpen, null, (_, _) => _viewModel.OpenMainCommand.Execute(null)));
+        _menu.Items.Add(new Forms.ToolStripMenuItem(_viewModel.ToggleEnabledText, null, (_, _) => _viewModel.ToggleEnabledCommand.Execute(null)));
         _menu.Items.Add(new Forms.ToolStripMenuItem(UiText.PauseToday, null, (_, _) => _viewModel.PauseTodayCommand.Execute(null)));
         _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add(new Forms.ToolStripMenuItem(UiText.TrayExit, null, (_, _) => _viewModel.ExitCommand.Execute(null)));
@@ -90,6 +91,8 @@ public sealed class TrayIconHost : IDisposable
 
     private TrayVisualState ResolveState() => _viewModel.Snapshot.MonitoringState switch
     {
+        RuntimeState.Disabled when _viewModel.Snapshot.LastMeaningfulEvent?.Code
+            is "status.paused-today" or "status.paused-until" => TrayVisualState.SuspendedToday,
         RuntimeState.Disabled => TrayVisualState.Off,
         RuntimeState.WaitingForWindow => TrayVisualState.Waiting,
         RuntimeState.Protected => TrayVisualState.Protected,

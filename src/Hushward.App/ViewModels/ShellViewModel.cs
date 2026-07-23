@@ -10,23 +10,27 @@ using Hushward.App.ViewModels.Tonight;
 using Hushward.Core.Actions;
 using Hushward.Core.Routines;
 using Hushward.Core.Warnings;
+using Hushward.App.Runtime;
 
 namespace Hushward.App.ViewModels;
 
 public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSnapshot>, IDisposable
 {
-    private readonly MainWindowViewModel _monitor;
+    private readonly NightMonitorController _monitor;
     private readonly Action<Action> _marshalToUi;
+    private readonly Func<NightRoutine, Task>? _synchronizeSchedule;
     private readonly IDisposable _snapshotSubscription;
     private NightRuntimeSnapshot _snapshot;
 
     public ShellViewModel(
-        MainWindowViewModel monitor,
+        NightMonitorController monitor,
         RuntimeSnapshotPublisher snapshots,
-        Action<Action> marshalToUi)
+        Action<Action> marshalToUi,
+        Func<NightRoutine, Task>? synchronizeSchedule = null)
     {
         _monitor = monitor;
         _marshalToUi = marshalToUi;
+        _synchronizeSchedule = synchronizeSchedule;
         _snapshot = snapshots.Latest;
         var routine = CreateRoutineFromMonitor();
         Home = new HomeViewModel(_snapshot);
@@ -35,6 +39,7 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
         Protections = new ProtectionsViewModel(_snapshot);
         _monitor.PropertyChanged += OnMonitorPropertyChanged;
         _snapshotSubscription = snapshots.Subscribe(this);
+        RequestScheduleSync();
     }
 
     public NightRuntimeSnapshot Snapshot
@@ -86,26 +91,48 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
     public bool IsEnabled
     {
         get => Snapshot.MonitoringState is not RuntimeState.Disabled and not RuntimeState.SafeMode;
-        set => _monitor.IsEnabled = value;
+        set
+        {
+            _monitor.IsEnabled = value;
+            RequestScheduleSync();
+        }
     }
 
     public string ScheduleSummaryText => _monitor.ScheduleSummaryText;
     public string StartTimeText
     {
         get => _monitor.StartTimeText;
-        set => _monitor.StartTimeText = value;
+        set
+        {
+            _monitor.StartTimeText = value;
+            RequestScheduleSync();
+        }
     }
 
     public int IdleThresholdMinutes
     {
         get => _monitor.IdleThresholdMinutes;
-        set => _monitor.IdleThresholdMinutes = value;
+        set
+        {
+            _monitor.IdleThresholdMinutes = value;
+            RequestScheduleSync();
+        }
     }
 
     public bool ContextChecksEnabled
     {
         get => _monitor.ContextChecksEnabled;
         set => _monitor.ContextChecksEnabled = value;
+    }
+
+    public bool WakeEnabled
+    {
+        get => _monitor.WakeEnabled;
+        set
+        {
+            _monitor.WakeEnabled = value;
+            RequestScheduleSync();
+        }
     }
 
     public bool IsCountdownActive => Snapshot.WarningState.Kind == WarningStateKind.Active;
@@ -133,11 +160,23 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
 
     public void CancelCountdownFromInput() => _monitor.CancelCountdownFromInput();
 
-    public void DisableUntilTomorrow() => _monitor.DisableUntilTomorrow();
+    public void DisableUntilTomorrow()
+    {
+        _monitor.DisableUntilTomorrow();
+        RequestScheduleSync();
+    }
 
-    public void Postpone(int minutes) => _monitor.DisableFor(TimeSpan.FromMinutes(minutes));
+    public void Postpone(int minutes)
+    {
+        _monitor.DisableFor(TimeSpan.FromMinutes(minutes));
+        RequestScheduleSync();
+    }
 
-    public void ReactivateToday() => _monitor.ReactivateToday();
+    public void ReactivateToday()
+    {
+        _monitor.ReactivateToday();
+        RequestScheduleSync();
+    }
 
     public void RefreshTemporaryDisableStatus() => _monitor.RefreshTemporaryDisableStatus();
 
@@ -175,12 +214,12 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
 
     private void OnMonitorPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(MainWindowViewModel.StatusText)
-            or nameof(MainWindowViewModel.TrayStatusText)
-            or nameof(MainWindowViewModel.HeaderStatusBrush)
-            or nameof(MainWindowViewModel.IsEnabled)
-            or nameof(MainWindowViewModel.IsCountdownActive)
-            or nameof(MainWindowViewModel.IsTemporarilyDisabled))
+        if (e.PropertyName is nameof(NightMonitorController.StatusText)
+            or nameof(NightMonitorController.TrayStatusText)
+            or nameof(NightMonitorController.HeaderStatusBrush)
+            or nameof(NightMonitorController.IsEnabled)
+            or nameof(NightMonitorController.IsCountdownActive)
+            or nameof(NightMonitorController.IsTemporarilyDisabled))
         {
             return;
         }
@@ -188,19 +227,20 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
         _marshalToUi(() => OnPropertyChanged(e.PropertyName));
     }
 
-    public Task ApplyRoutineAsync(NightRoutine routine)
+    public async Task ApplyRoutineAsync(NightRoutine routine)
     {
-        if (routine.PrimaryAction != NightAction.ShutDown)
-        {
-            throw new InvalidOperationException("Only shutdown is currently authorized by this runtime.");
-        }
-
         _monitor.IsEnabled = false;
         _monitor.StartTimeText = routine.Window.Earliest.ToString("HH:mm");
         _monitor.IdleThresholdMinutes = (int)routine.MinimumIdle.TotalMinutes;
         _monitor.ContextChecksEnabled = true;
+        _monitor.WakeEnabled = routine.WakePolicy != WakePolicy.NeverWake;
+        _monitor.SelectedAction = routine.PrimaryAction;
         _monitor.IsEnabled = routine.Enabled;
-        return Task.CompletedTask;
+        if (_synchronizeSchedule is not null)
+        {
+            await _synchronizeSchedule(CreateRoutineFromMonitor()).ConfigureAwait(false);
+        }
+
     }
 
     private NightRoutine CreateRoutineFromMonitor() => new(
@@ -212,9 +252,9 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
             TimeOnly.TryParse(_monitor.StartTimeText, out var earliest) ? earliest : new TimeOnly(1, 0),
             new TimeOnly(6, 0)),
         TimeSpan.FromMinutes(_monitor.IdleThresholdMinutes),
-        NightAction.ShutDown,
+        _monitor.SelectedAction,
         TimeSpan.FromSeconds(60),
-        WakePolicy.NeverWake,
+        _monitor.WakeEnabled ? WakePolicy.WakeToEvaluate : WakePolicy.NeverWake,
         LatestDecisionPolicy.KeepWaitingForProtections,
         []);
 
@@ -223,11 +263,20 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
         if (tonightOverride.PauseUntilTomorrow ||
             tonightOverride.RequireManualConfirmation)
         {
-            _monitor.DisableUntilTomorrow();
+            DisableUntilTomorrow();
         }
         else if (tonightOverride.PostponedUntil is { } postponedUntil)
         {
             _monitor.DisableFor(postponedUntil - DateTimeOffset.Now);
+            RequestScheduleSync();
+        }
+    }
+
+    private void RequestScheduleSync()
+    {
+        if (_synchronizeSchedule is not null)
+        {
+            _ = _synchronizeSchedule(CreateRoutineFromMonitor());
         }
     }
 }

@@ -8,7 +8,11 @@ using Hushward.App.ViewModels.Onboarding;
 using Hushward.App.ViewModels.Tray;
 using Hushward.App.ViewModels.Warnings;
 using Hushward.Application.Runtime;
+using Hushward.Application.Coordinators;
+using Hushward.Application.Results;
 using Hushward.Infrastructure.Power;
+using Hushward.Infrastructure.Scheduling;
+using Hushward.Infrastructure.Startup;
 using Hushward.Infrastructure.System;
 
 namespace Hushward.App;
@@ -79,6 +83,13 @@ public partial class App : System.Windows.Application
                     routine.Enabled ? mainWindow.ApplyRoutineAsync(routine) : Task.CompletedTask);
                 new OnboardingWindow(onboarding).ShowDialog();
                 _needsOnboarding = !onboarding.IsComplete;
+                if (onboarding.IsComplete && Environment.ProcessPath is { } executablePath)
+                {
+                    var startup = new WindowsStartupRegistration(executablePath);
+                    _ = startup.SetEnabledAsync(
+                        onboarding.StartWithWindows,
+                        CancellationToken.None);
+                }
             }
 
             mainWindow.Show();
@@ -107,7 +118,7 @@ public partial class App : System.Windows.Application
         var idleDetector = new Win32IdleDetector(clock);
         var contextDetector = AggregateContextDetector.CreateDefault();
         var snapshots = new RuntimeSnapshotPublisher(NightRuntimeSnapshot.Empty(0, clock.Now));
-        MainWindowViewModel? viewModel = null;
+        NightMonitorController? viewModel = null;
         var settingsStore = JsonUserSettingsStore.CreateDefault();
         _needsOnboarding = settingsStore.Load() is null;
         var shutdownExecutor = new CoordinatedShutdownExecutor(
@@ -116,8 +127,9 @@ public partial class App : System.Windows.Application
             clock,
             () => viewModel?.CreateSettings() ?? throw new InvalidOperationException("View model is not ready."),
             new WindowsNightActionExecutor(),
-            snapshots);
-        viewModel = new MainWindowViewModel(
+            snapshots,
+            () => viewModel?.SelectedAction ?? Hushward.Core.Actions.NightAction.ShutDown);
+        viewModel = new NightMonitorController(
             idleDetector,
             contextDetector,
             shutdownExecutor,
@@ -127,14 +139,52 @@ public partial class App : System.Windows.Application
             shutdownExecutor,
             snapshots);
 
+        var executablePath = Environment.ProcessPath
+            ?? throw new InvalidOperationException("Executable path is unavailable.");
+        var scheduleCoordinator = new ScheduleSyncCoordinator(
+            new WindowsTaskSchedulerSync(executablePath));
+        var scheduleGate = new SemaphoreSlim(1, 1);
         var shellViewModel = new ShellViewModel(
             viewModel,
             snapshots,
-            action => Dispatcher.Invoke(action));
+            action => Dispatcher.Invoke(action),
+            async routine =>
+            {
+                await scheduleGate.WaitAsync().ConfigureAwait(false);
+                try
+                {
+                    var result = await scheduleCoordinator
+                        .SynchronizeAsync([routine], CancellationToken.None)
+                        .ConfigureAwait(false);
+                    var latest = snapshots.Latest;
+                    snapshots.Publish(latest with
+                    {
+                        Sequence = latest.Sequence + 1,
+                        CapturedAt = clock.Now,
+                        WakeScheduleHealth = result.Value ??
+                            new ScheduleHealth(false, null, result.Error?.Code)
+                    });
+                }
+                finally
+                {
+                    scheduleGate.Release();
+                }
+            });
         ShellWindow? shellWindow = null;
         var trayViewModel = new TrayFlyoutViewModel(
             snapshots,
             shellViewModel.DisableUntilTomorrow,
+            () =>
+            {
+                if (shellViewModel.IsTemporarilyDisabled)
+                {
+                    shellViewModel.ReactivateToday();
+                }
+                else
+                {
+                    shellViewModel.IsEnabled = !shellViewModel.IsEnabled;
+                }
+            },
             () => shellWindow?.ShowFromUserRequest(),
             () =>
             {

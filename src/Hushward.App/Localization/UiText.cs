@@ -62,6 +62,7 @@ public static class UiText
     public static string TrayEnable => Get(nameof(TrayEnable));
     public static string TrayDisable => Get(nameof(TrayDisable));
     public static string TrayEnableNow => Get(nameof(TrayEnableNow));
+    public static string TrayIdleFormat => Get(nameof(TrayIdleFormat));
     public static string TrayPauseTomorrow => Get(nameof(TrayPauseTomorrow));
     public static string TrayExit => Get(nameof(TrayExit));
     public static string TrayStillRunningTitle => Get(nameof(TrayStillRunningTitle));

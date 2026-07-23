@@ -4,16 +4,17 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Hushward.App.Localization;
-using Hushward.App.Runtime;
 using Hushward.Application.Runtime;
 using Hushward.App.Settings;
+using Hushward.App.ViewModels;
 using Hushward.Core.Abstractions;
 using Hushward.Core.Models;
 using Hushward.Core.Services;
+using Hushward.Core.Actions;
 
-namespace Hushward.App.ViewModels;
+namespace Hushward.App.Runtime;
 
-public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
+public sealed class NightMonitorController : INotifyPropertyChanged, IDisposable
 {
     private readonly IIdleDetector? _idleDetector;
     private readonly IContextDetector? _contextDetector;
@@ -38,12 +39,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private string _startTimeText = "01:00";
     private int _idleThresholdMinutes = 15;
     private bool _contextChecksEnabled = true;
+    private bool _wakeEnabled;
+    private NightAction _selectedAction = NightAction.ShutDown;
     private bool _isCountdownActive;
     private int _countdownSecondsRemaining;
     private DateTimeOffset? _temporarilyDisabledUntil;
     private bool _isLoadingSettings;
 
-    public MainWindowViewModel(
+    public NightMonitorController(
         IIdleDetector? idleDetector = null,
         IContextDetector? contextDetector = null,
         IShutdownExecutor? shutdownExecutor = null,
@@ -174,6 +177,31 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             if (SetField(ref _contextChecksEnabled, value))
             {
                 OnPropertyChanged(nameof(ScheduleSummaryText));
+                ApplySettingsChange();
+                SaveSettings();
+            }
+        }
+    }
+
+    public bool WakeEnabled
+    {
+        get => _wakeEnabled;
+        set
+        {
+            if (SetField(ref _wakeEnabled, value))
+            {
+                SaveSettings();
+            }
+        }
+    }
+
+    public NightAction SelectedAction
+    {
+        get => _selectedAction;
+        set
+        {
+            if (SetField(ref _selectedAction, value))
+            {
                 ApplySettingsChange();
                 SaveSettings();
             }
@@ -496,6 +524,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
         var now = _clock.Now;
         var result = _decisionEngine.Evaluate(settings, idle, context, now);
+        if (_runtimeSnapshots is not null)
+        {
+            var latest = _runtimeSnapshots.Latest;
+            _runtimeSnapshots.Publish(latest with
+            {
+                Sequence = latest.Sequence + 1,
+                CapturedAt = now,
+                IdleState = new IdleRuntimeState(idle.IdleDuration, idle.InputDetected, now)
+            });
+        }
 
         switch (result.Action)
         {
@@ -631,6 +669,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             : snapshot.StartTimeText;
         _idleThresholdMinutes = Math.Clamp(snapshot.IdleThresholdMinutes, 1, 240);
         _contextChecksEnabled = snapshot.ContextChecksEnabled;
+        _wakeEnabled = snapshot.WakeEnabled;
+        _selectedAction = snapshot.SelectedAction;
         _temporarilyDisabledUntil = snapshot.TemporarilyDisabledUntil;
         _resumeAfterTemporaryDisable = snapshot.ResumeAfterTemporaryDisable;
         _isLoadingSettings = false;
@@ -639,6 +679,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(StartTimeText));
         OnPropertyChanged(nameof(IdleThresholdMinutes));
         OnPropertyChanged(nameof(ContextChecksEnabled));
+        OnPropertyChanged(nameof(WakeEnabled));
+        OnPropertyChanged(nameof(SelectedAction));
         OnPropertyChanged(nameof(ScheduleSummaryText));
         OnPropertyChanged(nameof(TemporarilyDisabledUntil));
         OnPropertyChanged(nameof(IsTemporarilyDisabled));
@@ -673,7 +715,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 IdleThresholdMinutes,
                 ContextChecksEnabled,
                 TemporarilyDisabledUntil,
-                _resumeAfterTemporaryDisable));
+                _resumeAfterTemporaryDisable,
+                WakeEnabled,
+                SelectedAction));
             SettingsWarningText = string.Empty;
         }
         catch (IOException)

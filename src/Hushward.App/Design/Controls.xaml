@@ -60,7 +60,8 @@
                             BorderBrush="Transparent"
                             BorderThickness="0,0,0,2"
                             Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center"
+                        <ContentPresenter ContentSource="Header"
+                                          HorizontalAlignment="Center"
                                           VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -70,7 +71,7 @@
                                     Property="BorderBrush"
                                     Value="{StaticResource BeaconBrush}" />
                             <Setter Property="Foreground"
-                                    Value="{StaticResource MistBrush}" />
+                                    Value="{StaticResource TextPrimaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsKeyboardFocusWithin"
                                  Value="True">

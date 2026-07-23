@@ -19,6 +19,7 @@ public sealed class CoordinatedShutdownExecutor : IShutdownExecutor, IWarningSes
     private readonly ISystemClock _clock;
     private readonly Func<SleepShutdownSettings> _settingsProvider;
     private readonly RuntimeSnapshotPublisher _publisher;
+    private readonly Func<NightAction> _actionProvider;
     private readonly WarningCoordinator _warningCoordinator;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private NightDecision? _freshFinalDecision;
@@ -30,13 +31,15 @@ public sealed class CoordinatedShutdownExecutor : IShutdownExecutor, IWarningSes
         ISystemClock clock,
         Func<SleepShutdownSettings> settingsProvider,
         INightActionExecutor actionExecutor,
-        RuntimeSnapshotPublisher publisher)
+        RuntimeSnapshotPublisher publisher,
+        Func<NightAction>? actionProvider = null)
     {
         _idleDetector = idleDetector;
         _contextDetector = contextDetector;
         _clock = clock;
         _settingsProvider = settingsProvider;
         _publisher = publisher;
+        _actionProvider = actionProvider ?? (() => NightAction.ShutDown);
 
         var actionCoordinator = new ActionCoordinator(actionExecutor);
         var nightGuardCoordinator = new NightGuardCoordinator(publisher, EvaluateFinalSnapshot);
@@ -59,7 +62,7 @@ public sealed class CoordinatedShutdownExecutor : IShutdownExecutor, IWarningSes
             var sequence = _publisher.Latest.Sequence;
 
             var result = await _warningCoordinator
-                .CompleteCountdownAsync(sequence, NightAction.ShutDown, cancellationToken)
+                .CompleteCountdownAsync(sequence, _actionProvider(), cancellationToken)
                 .ConfigureAwait(false);
             if (!result.IsSuccess)
             {
@@ -77,7 +80,7 @@ public sealed class CoordinatedShutdownExecutor : IShutdownExecutor, IWarningSes
     public Task StartAsync(TimeSpan duration, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return _warningCoordinator.StartAsync(NightAction.ShutDown, duration, _clock.Now);
+        return _warningCoordinator.StartAsync(_actionProvider(), duration, _clock.Now);
     }
 
     public Task InvalidateForInputAsync() =>
@@ -97,7 +100,7 @@ public sealed class CoordinatedShutdownExecutor : IShutdownExecutor, IWarningSes
         if (_freshFinalDecisionAt is null ||
             _clock.Now - _freshFinalDecisionAt > MaximumAuthorizationAge ||
             _freshFinalDecision?.Kind != NightDecisionKind.AuthorizedToExecute ||
-            _freshFinalDecision.AuthorizedAction != NightAction.ShutDown ||
+            _freshFinalDecision.AuthorizedAction != _actionProvider() ||
             snapshot.WarningState.Kind != WarningStateKind.Active)
         {
             return NightDecision.Blocked(NightDecisionKind.Protected, DecisionReasonCode.FinalCheckFailed);
@@ -106,7 +109,7 @@ public sealed class CoordinatedShutdownExecutor : IShutdownExecutor, IWarningSes
         return _freshFinalDecision;
     }
 
-    private static NightDecision EvaluateFreshAuthorization(
+    private NightDecision EvaluateFreshAuthorization(
         SleepShutdownSettings settings,
         IdleSnapshot idle,
         ContextSnapshot context,
@@ -133,7 +136,7 @@ public sealed class CoordinatedShutdownExecutor : IShutdownExecutor, IWarningSes
         }
 
         return NightDecision.Ready(
-            NightAction.ShutDown,
+            _actionProvider(),
             DecisionReasonCode.Ready,
             warningDuration: null,
             kind: NightDecisionKind.AuthorizedToExecute);

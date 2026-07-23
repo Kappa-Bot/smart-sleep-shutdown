@@ -1,4 +1,5 @@
 using Hushward.App.ViewModels;
+using Hushward.App.Runtime;
 using Hushward.App;
 using Hushward.App.Settings;
 using Hushward.Core.Abstractions;
@@ -7,12 +8,12 @@ using System.Globalization;
 
 namespace Hushward.App.Tests;
 
-public sealed class MainWindowViewModelTests
+public sealed class NightMonitorControllerTests
 {
     [Fact]
     public void DefaultsMatchProductPlan()
     {
-        var viewModel = new MainWindowViewModel();
+        var viewModel = new NightMonitorController();
 
         Assert.False(viewModel.IsEnabled);
         Assert.Equal("01:00", viewModel.StartTimeText);
@@ -24,7 +25,7 @@ public sealed class MainWindowViewModelTests
     [Fact]
     public void SettingsReflectViewModelValues()
     {
-        var viewModel = new MainWindowViewModel
+        var viewModel = new NightMonitorController
         {
             IsEnabled = true,
             StartTimeText = "02:30",
@@ -54,7 +55,7 @@ public sealed class MainWindowViewModelTests
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 1, 0, 0, TimeSpan.Zero));
         var idleDetector = new FakeIdleDetector(() => new IdleSnapshot(clock.Now, TimeSpan.FromHours(2), false));
         var shutdownExecutor = new FakeShutdownExecutor();
-        var viewModel = new MainWindowViewModel(
+        var viewModel = new NightMonitorController(
             idleDetector,
             new ClearContextDetector(),
             shutdownExecutor,
@@ -77,7 +78,7 @@ public sealed class MainWindowViewModelTests
     public void TemporarilyDisableUntilTomorrowTurnsOffAndShowsPausedTrayStatus()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 22, 30, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(clock: clock);
+        var viewModel = new NightMonitorController(clock: clock);
         viewModel.IsEnabled = true;
 
         viewModel.DisableUntilTomorrow();
@@ -94,7 +95,7 @@ public sealed class MainWindowViewModelTests
     public void TemporaryDisableRestoresActiveStateOnNextDay()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 22, 30, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(clock: clock);
+        var viewModel = new NightMonitorController(clock: clock);
         viewModel.IsEnabled = true;
         viewModel.DisableUntilTomorrow();
 
@@ -111,7 +112,7 @@ public sealed class MainWindowViewModelTests
     public void TemporaryDisableKeepsOffStateOnNextDayWhenItWasAlreadyOff()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 22, 30, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(clock: clock);
+        var viewModel = new NightMonitorController(clock: clock);
 
         viewModel.DisableUntilTomorrow();
 
@@ -127,7 +128,7 @@ public sealed class MainWindowViewModelTests
     public void TrayVisualStateShowsActiveSuspendedAndOff()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 22, 30, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(clock: clock);
+        var viewModel = new NightMonitorController(clock: clock);
 
         Assert.Equal(TrayVisualState.Off, TrayVisualStateResolver.Resolve(viewModel));
 
@@ -142,7 +143,7 @@ public sealed class MainWindowViewModelTests
     public void HeaderStatusBrushReflectsVisualState()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 22, 30, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(clock: clock);
+        var viewModel = new NightMonitorController(clock: clock);
 
         Assert.Equal("#64748B", viewModel.HeaderStatusBrush);
 
@@ -157,7 +158,7 @@ public sealed class MainWindowViewModelTests
     public async Task ChangingStartTimeWhileSleepingRestartsMonitoring()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 0, 40, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(
+        var viewModel = new NightMonitorController(
             new FakeIdleDetector(() => new IdleSnapshot(clock.Now, TimeSpan.FromHours(2), false)),
             new ClearContextDetector(),
             new FakeShutdownExecutor(),
@@ -177,7 +178,7 @@ public sealed class MainWindowViewModelTests
     public async Task SleepingStatusShowsActualWakeTime()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 23, 0, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(
+        var viewModel = new NightMonitorController(
             new FakeIdleDetector(() => new IdleSnapshot(clock.Now, TimeSpan.Zero, false)),
             new ClearContextDetector(),
             new FakeShutdownExecutor(),
@@ -196,7 +197,7 @@ public sealed class MainWindowViewModelTests
     public async Task ScheduledCheckRestartsSleepingMonitorAndEvaluatesCurrentTime()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 0, 40, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(
+        var viewModel = new NightMonitorController(
             new FakeIdleDetector(() => new IdleSnapshot(clock.Now, TimeSpan.FromHours(2), false)),
             new ClearContextDetector(),
             new FakeShutdownExecutor(),
@@ -217,7 +218,7 @@ public sealed class MainWindowViewModelTests
     public async Task InvalidStartTimeDisarmsMonitoringInsteadOfUsingDefaultTime()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 1, 0, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(
+        var viewModel = new NightMonitorController(
             new FakeIdleDetector(() => new IdleSnapshot(clock.Now, TimeSpan.FromHours(2), false)),
             new ClearContextDetector(),
             new FakeShutdownExecutor(),
@@ -239,7 +240,7 @@ public sealed class MainWindowViewModelTests
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 1, 0, 0, TimeSpan.Zero));
         var shutdownExecutor = new FakeShutdownExecutor();
-        var viewModel = new MainWindowViewModel(
+        var viewModel = new NightMonitorController(
             new ThrowingIdleDetector(),
             new ClearContextDetector(),
             shutdownExecutor,
@@ -257,7 +258,7 @@ public sealed class MainWindowViewModelTests
     public async Task PassiveStatusShowsIdleProgress()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 1, 0, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(
+        var viewModel = new NightMonitorController(
             new FakeIdleDetector(() => new IdleSnapshot(clock.Now, TimeSpan.FromMinutes(12), false)),
             new ClearContextDetector(),
             new FakeShutdownExecutor(),
@@ -273,7 +274,7 @@ public sealed class MainWindowViewModelTests
     [Fact]
     public void ScheduleSummaryUpdatesWhenSettingsChange()
     {
-        var viewModel = new MainWindowViewModel
+        var viewModel = new NightMonitorController
         {
             StartTimeText = "03:10",
             IdleThresholdMinutes = 22,
@@ -287,7 +288,7 @@ public sealed class MainWindowViewModelTests
     public async Task BlockingStatusShowsReason()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 1, 0, 0, TimeSpan.Zero));
-        var viewModel = new MainWindowViewModel(
+        var viewModel = new NightMonitorController(
             new FakeIdleDetector(() => new IdleSnapshot(clock.Now, TimeSpan.FromMinutes(12), false)),
             new BlockedContextDetector("Audio is playing"),
             new FakeShutdownExecutor(),
@@ -310,7 +311,7 @@ public sealed class MainWindowViewModelTests
             TemporarilyDisabledUntil: null,
             ResumeAfterTemporaryDisable: false));
 
-        var viewModel = new MainWindowViewModel(settingsStore: store);
+        var viewModel = new NightMonitorController(settingsStore: store);
 
         Assert.True(viewModel.IsEnabled);
         Assert.Equal("02:15", viewModel.StartTimeText);
@@ -326,7 +327,7 @@ public sealed class MainWindowViewModelTests
     [Fact]
     public void SettingsSaveFailureDoesNotCrashUiStateChange()
     {
-        var viewModel = new MainWindowViewModel(settingsStore: new ThrowingSettingsStore());
+        var viewModel = new NightMonitorController(settingsStore: new ThrowingSettingsStore());
 
         var exception = Record.Exception(() => viewModel.IsEnabled = true);
 

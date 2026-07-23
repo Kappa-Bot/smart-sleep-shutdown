@@ -1,53 +1,40 @@
-# UX Guide
+# Guía UX
 
-Hushward is a tray-first Windows utility. UX goal: user trusts it, understands it, then forgets it.
+## Principio
 
-## Language
+Hushward es tray-first, calmado y predecible. No es un dashboard. Cada elemento
+debe evitar una acción errónea, una acción perdida o una duda importante.
 
-- UI language is Spanish.
-- Keep strings short and concrete.
-- Avoid technical labels when user action is clearer.
-- Prefer `Pausar hoy`, `Ver ventana`, `Desactivado`, `Vigilando`.
+## La ventana responde
 
-## Window
+- ¿Está activo?
+- ¿Qué espera?
+- ¿Cuándo podría actuar?
+- ¿Cómo lo pauso?
+- ¿Qué ocurre al cerrar?
 
-Required first-glance answers:
+La navegación se limita a Inicio, Esta noche, Rutinas y Protecciones. Historial,
+diagnósticos y recuperación son secundarios y locales.
 
-- Is shutdown guard active?
-- What is it waiting for?
-- How do I cancel a shutdown?
-- Where did it go after close?
+## Bandeja
 
-Do not add dashboards, charts, logs, accounts, telemetry, or multi-page navigation.
+El icono y el texto siempre coinciden: activo, esperando, protegido, aviso,
+pausado o atención. Cerrar oculta; `Salir` termina. El menú muestra estado,
+próxima ventana, inactividad, pausa, activar/desactivar, abrir y salir.
 
-## Tray
+## Advertencia
 
-Tray is primary home after setup.
+Es una ventana separada en el monitor activo, con acción y cuenta atrás grandes,
+cancelación primaria y explicación breve. Mover ratón o pulsar tecla cancela.
+El anuncio accesible usa hitos, no cada segundo. No depende solo del color.
 
-- Left click opens window.
-- Right click shows actions.
-- Close hides to tray and shows short hint.
-- Exit menu item is only normal app exit path.
+## Lenguaje y estilo
 
-Status badge meanings:
+- Español mediante recursos.
+- Frases cortas, concretas y sin jerga.
+- Segoe UI Variable, superficies sobrias, verde para activo y ámbar para atención.
+- Sin gráficos, decoración gratuita, tarjetas anidadas o contenido comercial.
+- Soporta teclado, alto contraste, reduced motion, 200% DPI y varios monitores.
 
-- green: active
-- amber pause: paused until tomorrow
-- gray: off
-
-## Hints
-
-Hints should be temporary or compact. Use them only for safety-critical or discoverability-critical behavior:
-
-- closing keeps app active in tray
-- shutdown warning cancels on input
-- start time format is `HH:mm`
-- context checks prevent wrong shutdowns
-
-## Visual Style
-
-- Calm Windows utility.
-- Muted blue-gray shell, white work surfaces, green active state, amber warning state.
-- Cards only for actual grouped controls or status.
-- No decorative blobs, charts, or marketing layout.
-
+Los hints son temporales y solo explican close-to-tray, formato horario,
+cancelación del aviso, wake o un bloqueo de seguridad.

@@ -1,4 +1,5 @@
 using Hushward.App.ViewModels;
+using Hushward.App.Runtime;
 
 namespace Hushward.App;
 
@@ -14,7 +15,7 @@ public static class TrayVisualStateResolver
         return viewModel.IsEnabled ? TrayVisualState.Active : TrayVisualState.Off;
     }
 
-    public static TrayVisualState Resolve(MainWindowViewModel viewModel)
+    public static TrayVisualState Resolve(NightMonitorController viewModel)
     {
         if (viewModel.IsTemporarilyDisabled)
         {

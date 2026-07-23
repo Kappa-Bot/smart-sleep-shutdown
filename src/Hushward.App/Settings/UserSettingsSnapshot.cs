@@ -1,3 +1,5 @@
+using Hushward.Core.Actions;
+
 namespace Hushward.App.Settings;
 
 public sealed record UserSettingsSnapshot(
@@ -6,5 +8,6 @@ public sealed record UserSettingsSnapshot(
     int IdleThresholdMinutes,
     bool ContextChecksEnabled,
     DateTimeOffset? TemporarilyDisabledUntil,
-    bool ResumeAfterTemporaryDisable);
-
+    bool ResumeAfterTemporaryDisable,
+    bool WakeEnabled = false,
+    NightAction SelectedAction = NightAction.ShutDown);

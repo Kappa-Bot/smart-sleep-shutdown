@@ -24,6 +24,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <StartupObject>Hushward.App.Program</StartupObject>
     <ApplicationIcon>Assets\Hushward.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
 
 </Project>

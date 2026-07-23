@@ -11,10 +11,12 @@ public sealed class JsonUserSettingsStore : IUserSettingsStore
     };
 
     private readonly string _path;
+    private readonly string? _legacyPath;
 
-    public JsonUserSettingsStore(string path)
+    public JsonUserSettingsStore(string path, string? legacyPath = null)
     {
         _path = path;
+        _legacyPath = legacyPath;
     }
 
     public static JsonUserSettingsStore CreateDefault()
@@ -22,33 +24,26 @@ public sealed class JsonUserSettingsStore : IUserSettingsStore
         var directory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Hushward");
-        return new JsonUserSettingsStore(Path.Combine(directory, "settings.json"));
+        return new JsonUserSettingsStore(
+            Path.Combine(directory, "runtime-settings.json"),
+            Path.Combine(directory, "settings.json"));
     }
 
     public UserSettingsSnapshot? Load()
     {
-        if (!File.Exists(_path))
+        var loaded = TryLoad(_path);
+        if (loaded is not null)
         {
-            return null;
+            return loaded;
         }
 
-        try
+        loaded = TryLoad($"{_path}.bak") ?? TryLoad(_legacyPath);
+        if (loaded is not null)
         {
-            var json = File.ReadAllText(_path);
-            return JsonSerializer.Deserialize<UserSettingsSnapshot>(json, JsonOptions);
+            Save(loaded);
         }
-        catch (JsonException)
-        {
-            return null;
-        }
-        catch (IOException)
-        {
-            return null;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return null;
-        }
+
+        return loaded;
     }
 
     public void Save(UserSettingsSnapshot snapshot)
@@ -81,5 +76,22 @@ public sealed class JsonUserSettingsStore : IUserSettingsStore
             File.Delete(tempPath);
         }
     }
-}
 
+    private static UserSettingsSnapshot? TryLoad(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            return null;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(path);
+            return JsonSerializer.Deserialize<UserSettingsSnapshot>(json, JsonOptions);
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+}

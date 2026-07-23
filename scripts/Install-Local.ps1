@@ -1,6 +1,6 @@
 param(
     [string] $Configuration = "Release",
-    [string] $InstallRoot = "$env:LOCALAPPDATA\Hushward"
+    [string] $InstallRoot = "$env:LOCALAPPDATA\Hushward\App"
 )
 
 $ErrorActionPreference = "Stop"
@@ -9,11 +9,13 @@ $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $projectPath = Join-Path $projectRoot "src\Hushward.App\Hushward.App.csproj"
 $exePath = Join-Path $InstallRoot "Hushward.App.exe"
 
+$legacyExePath = Join-Path $env:LOCALAPPDATA "Hushward\Hushward.App.exe"
 $runningProcesses = Get-Process -Name "Hushward.App" -ErrorAction SilentlyContinue |
-    Where-Object { $_.Path -eq $exePath }
+    Where-Object { $_.Path -in @($exePath, $legacyExePath) }
 
 if ($runningProcesses) {
-    $exitSignalProcess = Start-Process -FilePath $exePath -ArgumentList "--exit" -PassThru
+    $signalExecutable = $runningProcesses[0].Path
+    $exitSignalProcess = Start-Process -FilePath $signalExecutable -ArgumentList "--exit" -PassThru
     try {
         Wait-Process -Id $exitSignalProcess.Id -Timeout 5 -ErrorAction Stop
     }
