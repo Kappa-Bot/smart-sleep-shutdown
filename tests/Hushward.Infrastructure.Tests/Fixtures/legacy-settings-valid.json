@@ -1,0 +1,6 @@
+{
+  "Enabled": true,
+  "StartTime": "01:00",
+  "IdleThresholdMinutes": 15,
+  "ContextChecksEnabled": true
+}

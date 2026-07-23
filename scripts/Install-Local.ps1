@@ -1,20 +1,21 @@
 param(
     [string] $Configuration = "Release",
-    [string] $InstallRoot = "$env:LOCALAPPDATA\SmartSleepShutdown"
+    [string] $InstallRoot = "$env:LOCALAPPDATA\Hushward\App"
 )
 
 $ErrorActionPreference = "Stop"
 
 $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$projectPath = Join-Path $projectRoot "src\SmartSleepShutdown.App\SmartSleepShutdown.App.csproj"
-$exePath = Join-Path $InstallRoot "SmartSleepShutdown.exe"
-$wakeTaskName = "SmartSleepShutdown-NightWake"
+$projectPath = Join-Path $projectRoot "src\Hushward.App\Hushward.App.csproj"
+$exePath = Join-Path $InstallRoot "Hushward.App.exe"
 
-$runningProcesses = Get-Process -Name "SmartSleepShutdown" -ErrorAction SilentlyContinue |
-    Where-Object { $_.Path -eq $exePath }
+$legacyExePath = Join-Path $env:LOCALAPPDATA "Hushward\Hushward.App.exe"
+$runningProcesses = Get-Process -Name "Hushward.App" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Path -in @($exePath, $legacyExePath) }
 
 if ($runningProcesses) {
-    $exitSignalProcess = Start-Process -FilePath $exePath -ArgumentList "--exit" -PassThru
+    $signalExecutable = $runningProcesses[0].Path
+    $exitSignalProcess = Start-Process -FilePath $signalExecutable -ArgumentList "--exit" -PassThru
     try {
         Wait-Process -Id $exitSignalProcess.Id -Timeout 5 -ErrorAction Stop
     }
@@ -47,58 +48,11 @@ $runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 New-Item -Path $runKey -Force | Out-Null
 New-ItemProperty `
     -Path $runKey `
-    -Name "SmartSleepShutdown" `
+    -Name "Hushward" `
     -Value "`"$exePath`" --startup" `
     -PropertyType String `
     -Force | Out-Null
 
-$taskAction = New-ScheduledTaskAction `
-    -Execute $exePath `
-    -Argument "--scheduled-check"
-$taskTrigger = New-ScheduledTaskTrigger `
-    -Daily `
-    -At "00:30"
-$repetitionSource = New-ScheduledTaskTrigger `
-    -Once `
-    -At "00:30" `
-    -RepetitionInterval (New-TimeSpan -Minutes 5) `
-    -RepetitionDuration (New-TimeSpan -Hours 6)
-$taskTrigger.Repetition = $repetitionSource.Repetition
-$taskTrigger.Repetition.Interval = "PT5M"
-$taskTrigger.Repetition.Duration = "PT6H"
-$taskSettings = New-ScheduledTaskSettingsSet `
-    -WakeToRun `
-    -StartWhenAvailable `
-    -AllowStartIfOnBatteries `
-    -DontStopIfGoingOnBatteries `
-    -MultipleInstances IgnoreNew `
-    -ExecutionTimeLimit (New-TimeSpan -Hours 6)
-$taskPrincipal = New-ScheduledTaskPrincipal `
-    -UserId ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name) `
-    -LogonType Interactive `
-    -RunLevel Limited
-$wakeTask = New-ScheduledTask `
-    -Action $taskAction `
-    -Trigger $taskTrigger `
-    -Settings $taskSettings `
-    -Principal $taskPrincipal `
-    -Description "Wake and start Smart Sleep Shutdown before the nightly shutdown window."
-
-Register-ScheduledTask `
-    -TaskName $wakeTaskName `
-    -InputObject $wakeTask `
-    -Force | Out-Null
-
-try {
-    powercfg /SETACVALUEINDEX SCHEME_CURRENT SUB_SLEEP RTCWAKE 1 | Out-Null
-    powercfg /SETDCVALUEINDEX SCHEME_CURRENT SUB_SLEEP RTCWAKE 1 | Out-Null
-    powercfg /S SCHEME_CURRENT | Out-Null
-    Write-Host "Wake timers enabled for the current power plan."
-}
-catch {
-    Write-Warning "Could not enable wake timers automatically. Enable 'Allow wake timers' in Windows Power Options."
-}
-
-Write-Host "Installed Smart Sleep Shutdown to $InstallRoot"
+Write-Host "Installed Hushward to $InstallRoot"
 Write-Host "Startup registration: $exePath --startup"
-Write-Host "Wake scheduled task: $wakeTaskName at 00:30"
+Write-Host "Wake scheduled task: managed by Hushward when a routine enables wake."

@@ -1,0 +1,25 @@
+<UserControl x:Class="Hushward.App.Views.Tonight.TonightView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:Hushward.App.Localization">
+    <StackPanel>
+        <TextBlock Text="{Binding PermanentPlan}"
+                   FontSize="16"
+                   FontWeight="SemiBold"
+                   TextWrapping="Wrap" />
+        <TextBlock Margin="0,7,0,14"
+                   Text="{Binding ExpiryText}"
+                   Foreground="{StaticResource QuietGrayBrush}" />
+        <Button HorizontalAlignment="Left"
+                Command="{Binding PauseCommand}"
+                Content="{x:Static loc:UiText.TonightPause}" />
+        <Button Margin="0,8,0,0"
+                HorizontalAlignment="Left"
+                Command="{Binding PostponeCommand}"
+                Content="{x:Static loc:UiText.TonightPostpone30}" />
+        <Button Margin="0,8,0,0"
+                HorizontalAlignment="Left"
+                Command="{Binding RequireConfirmationCommand}"
+                Content="{x:Static loc:UiText.TonightRequireConfirmation}" />
+    </StackPanel>
+</UserControl>

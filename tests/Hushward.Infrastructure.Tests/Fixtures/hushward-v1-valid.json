@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "productVersion": "0.1.0-test",
+  "writtenAt": "2026-07-23T01:00:00+00:00",
+  "settings": {
+    "routines": [],
+    "tonightOverride": null,
+    "protectionRules": [],
+    "privacy": { "historyRetentionDays": 14 },
+    "uiPreferences": { "reducedMotion": false },
+    "installationState": { "startWithWindows": false, "wakeTasksEnabled": false },
+    "requiresMigrationReview": false
+  }
+}

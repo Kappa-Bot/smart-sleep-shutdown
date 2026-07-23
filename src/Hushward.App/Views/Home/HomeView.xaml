@@ -1,0 +1,21 @@
+<UserControl x:Class="Hushward.App.Views.Home.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:Hushward.App.Localization">
+    <StackPanel>
+        <TextBlock Text="{Binding StateLabel}"
+                   FontSize="24"
+                   FontWeight="SemiBold" />
+        <TextBlock Margin="0,14,0,4"
+                   Text="{x:Static loc:UiText.HomeReasonLabel}"
+                   Style="{StaticResource CaptionTextStyle}" />
+        <TextBlock Text="{Binding PrimaryReason}"
+                   TextWrapping="Wrap" />
+        <TextBlock Margin="0,14,0,4"
+                   Text="{x:Static loc:UiText.HomeProtectionCountLabel}"
+                   Style="{StaticResource CaptionTextStyle}" />
+        <TextBlock Text="{Binding ActiveProtectionCount}"
+                   FontSize="18"
+                   FontWeight="SemiBold" />
+    </StackPanel>
+</UserControl>

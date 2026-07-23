@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Hushward</value>
+  </data>
+  <data name="AppSubtitle" xml:space="preserve">
+    <value>Guardián nocturno. Avisa, vuelve a comprobar y actúa solo si es seguro.</value>
+  </data>
+  <data name="PrimaryStatusLabel" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="NoSilentShutdownHint" xml:space="preserve">
+    <value>No actúa sin aviso. Mueve el ratón o pulsa una tecla para cancelar.</value>
+  </data>
+  <data name="StartTimeLabel" xml:space="preserve">
+    <value>Hora de inicio</value>
+  </data>
+  <data name="StartTimeHint" xml:space="preserve">
+    <value>Formato 24 h, por ejemplo 01:00.</value>
+  </data>
+  <data name="IdleLabel" xml:space="preserve">
+    <value>Inactividad</value>
+  </data>
+  <data name="IdleHint" xml:space="preserve">
+    <value>Minutos antes de avisar.</value>
+  </data>
+  <data name="ProtectionsLabel" xml:space="preserve">
+    <value>Protecciones</value>
+  </data>
+  <data name="ProtectionsHint" xml:space="preserve">
+    <value>Audio, pantalla completa y carga alta retrasan la acción cuando aún puede no ser seguro.</value>
+  </data>
+  <data name="WarningPrefix" xml:space="preserve">
+    <value>Acción en </value>
+  </data>
+  <data name="WarningSuffix" xml:space="preserve">
+    <value> segundos</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="PauseToday" xml:space="preserve">
+    <value>Pausar hoy</value>
+  </data>
+  <data name="FooterHint" xml:space="preserve">
+    <value>Al cerrar, sigue activo junto al reloj. Verde activo; ámbar pausado; gris desactivado.</value>
+  </data>
+  <data name="NavHome" xml:space="preserve">
+    <value>Inicio</value>
+  </data>
+  <data name="NavTonight" xml:space="preserve">
+    <value>Esta noche</value>
+  </data>
+  <data name="NavRoutines" xml:space="preserve">
+    <value>Rutinas</value>
+  </data>
+  <data name="NavProtections" xml:space="preserve">
+    <value>Protecciones</value>
+  </data>
+  <data name="EnabledText" xml:space="preserve">
+    <value>Activado</value>
+  </data>
+  <data name="DisabledText" xml:space="preserve">
+    <value>Desactivado</value>
+  </data>
+  <data name="EnableAutomationName" xml:space="preserve">
+    <value>Activar o desactivar Hushward</value>
+  </data>
+  <data name="ContextChecksLabel" xml:space="preserve">
+    <value>Proteger audio, pantalla completa y carga alta</value>
+  </data>
+  <data name="TonightHint" xml:space="preserve">
+    <value>Los cambios de esta noche se aplican de inmediato y cancelan cualquier aviso en curso.</value>
+  </data>
+  <data name="RoutineHint" xml:space="preserve">
+    <value>Resumen de la rutina nocturna efectiva.</value>
+  </data>
+  <data name="StatusLiveRegionName" xml:space="preserve">
+    <value>Estado actual de Hushward</value>
+  </data>
+  <data name="StatusDisabled" xml:space="preserve">
+    <value>Desactivado</value>
+  </data>
+  <data name="StatusWatching" xml:space="preserve">
+    <value>Vigilando</value>
+  </data>
+  <data name="StatusPausedTomorrow" xml:space="preserve">
+    <value>Pausado hasta mañana</value>
+  </data>
+  <data name="StatusCancelledActivity" xml:space="preserve">
+    <value>Cancelado por actividad</value>
+  </data>
+  <data name="StatusInvalidTime" xml:space="preserve">
+    <value>Usa una hora con formato HH:mm</value>
+  </data>
+  <data name="StatusMonitoringPaused" xml:space="preserve">
+    <value>Vigilancia pausada por seguridad</value>
+  </data>
+  <data name="StatusDetectorBlocked" xml:space="preserve">
+    <value>Bloqueado: detector no disponible</value>
+  </data>
+  <data name="StatusShuttingDown" xml:space="preserve">
+    <value>Apagando</value>
+  </data>
+  <data name="StatusBlockedActivity" xml:space="preserve">
+    <value>Bloqueado por actividad protegida</value>
+  </data>
+  <data name="StatusReadyToWarn" xml:space="preserve">
+    <value>Listo para avisar</value>
+  </data>
+  <data name="StatusWaitingForWindow" xml:space="preserve">
+    <value>Aún no es la hora</value>
+  </data>
+  <data name="StatusShutdownCountdown" xml:space="preserve">
+    <value>Apagado en 60 segundos</value>
+  </data>
+  <data name="StatusSleepingUntilFormat" xml:space="preserve">
+    <value>Durmiendo hasta {0:HH:mm}</value>
+  </data>
+  <data name="StatusReadyForFormat" xml:space="preserve">
+    <value>Listo para {0:HH:mm}</value>
+  </data>
+  <data name="StatusWaitingUntilFormat" xml:space="preserve">
+    <value>Esperando hasta {0:HH:mm}</value>
+  </data>
+  <data name="StatusBlockedFormat" xml:space="preserve">
+    <value>Bloqueado: {0}</value>
+  </data>
+  <data name="StatusIdleProgressFormat" xml:space="preserve">
+    <value>Inactivo {0}/{1} min</value>
+  </data>
+  <data name="ScheduleSummaryFormat" xml:space="preserve">
+    <value>Activo desde {0} hasta 06:00 · Inactividad {1} min · {2}</value>
+  </data>
+  <data name="ContextOn" xml:space="preserve">
+    <value>Protecciones activas</value>
+  </data>
+  <data name="ContextOff" xml:space="preserve">
+    <value>Protecciones desactivadas</value>
+  </data>
+  <data name="SettingsSaveFailed" xml:space="preserve">
+    <value>No se pudo guardar la configuración</value>
+  </data>
+  <data name="TrayStatusDisabled" xml:space="preserve">
+    <value>Hushward · DESACTIVADO</value>
+  </data>
+  <data name="TrayStatusPausedTomorrow" xml:space="preserve">
+    <value>Hushward · PAUSADO hasta mañana</value>
+  </data>
+  <data name="TrayStatusActiveFormat" xml:space="preserve">
+    <value>Hushward · ACTIVO · {0}</value>
+  </data>
+  <data name="TrayOpen" xml:space="preserve">
+    <value>Ver ventana</value>
+  </data>
+  <data name="TrayEnable" xml:space="preserve">
+    <value>Activar</value>
+  </data>
+  <data name="TrayDisable" xml:space="preserve">
+    <value>Desactivar</value>
+  </data>
+  <data name="TrayEnableNow" xml:space="preserve">
+    <value>Activar ahora</value>
+  </data>
+  <data name="TrayIdleFormat" xml:space="preserve">
+    <value>Sin actividad: {0} min</value>
+  </data>
+  <data name="TrayPauseTomorrow" xml:space="preserve">
+    <value>Pausar hasta mañana</value>
+  </data>
+  <data name="TrayExit" xml:space="preserve">
+    <value>Salir</value>
+  </data>
+  <data name="TrayStillRunningTitle" xml:space="preserve">
+    <value>Sigue activo junto al reloj</value>
+  </data>
+  <data name="TrayStillRunningMessage" xml:space="preserve">
+    <value>Hushward sigue funcionando. Usa el icono del área de notificación para abrirlo, pausarlo o salir.</value>
+  </data>
+  <data name="ReasonRoutineDisabled" xml:space="preserve"><value>La rutina está desactivada.</value></data>
+  <data name="ReasonOutsideWindow" xml:space="preserve"><value>Aún no está dentro de la ventana nocturna.</value></data>
+  <data name="ReasonIdleNotMet" xml:space="preserve"><value>Has usado el teclado o el ratón recientemente.</value></data>
+  <data name="ReasonCriticalProtection" xml:space="preserve"><value>Hay una protección crítica activa.</value></data>
+  <data name="ReasonTemporaryProtection" xml:space="preserve"><value>Hay una actividad protegida en curso.</value></data>
+  <data name="ReasonEvidenceUnknown" xml:space="preserve"><value>Falta una comprobación necesaria; por seguridad no actuamos.</value></data>
+  <data name="ReasonActionUnsupported" xml:space="preserve"><value>Esta acción no está disponible en este equipo.</value></data>
+  <data name="ReasonManualConfirmation" xml:space="preserve"><value>Esta noche requiere confirmación manual.</value></data>
+  <data name="ReasonCancelledByInput" xml:space="preserve"><value>Se canceló porque detectamos actividad.</value></data>
+  <data name="ReasonCancelledByProtection" xml:space="preserve"><value>Se canceló porque apareció una protección.</value></data>
+  <data name="ReasonOperationInProgress" xml:space="preserve"><value>Hay una operación segura en curso.</value></data>
+  <data name="ReasonReady" xml:space="preserve"><value>Todo está listo para la siguiente comprobación.</value></data>
+  <data name="OnboardingStepPurpose" xml:space="preserve"><value>Qué hace Hushward</value></data>
+  <data name="OnboardingStepAction" xml:space="preserve"><value>Acción nocturna</value></data>
+  <data name="OnboardingStepSchedule" xml:space="preserve"><value>Horario e inactividad</value></data>
+  <data name="OnboardingStepReview" xml:space="preserve"><value>Revisar y activar</value></data>
+  <data name="OnboardingSummaryFormat" xml:space="preserve"><value>Hushward podrá {0} desde la {1:HH\:mm} tras {2} minutos sin actividad. Siempre avisará y volverá a comprobar antes de actuar.</value></data>
+  <data name="DefaultRoutineName" xml:space="preserve"><value>Mi rutina nocturna</value></data>
+  <data name="ActionShutdown" xml:space="preserve"><value>apagar el equipo</value></data>
+  <data name="ActionHibernate" xml:space="preserve"><value>hibernar</value></data>
+  <data name="ActionSleep" xml:space="preserve"><value>suspender</value></data>
+  <data name="ActionLock" xml:space="preserve"><value>bloquear la sesión</value></data>
+  <data name="ActionWarnOnly" xml:space="preserve"><value>avisar solamente</value></data>
+  <data name="HomeStateOff" xml:space="preserve"><value>Desactivado</value></data>
+  <data name="HomeStateWaiting" xml:space="preserve"><value>Esperando</value></data>
+  <data name="HomeStateProtected" xml:space="preserve"><value>Protegido</value></data>
+  <data name="HomeStateWarning" xml:space="preserve"><value>Aviso activo</value></data>
+  <data name="HomeStateDegraded" xml:space="preserve"><value>Revisión necesaria</value></data>
+  <data name="HomeStateReady" xml:space="preserve"><value>Vigilando</value></data>
+  <data name="PermanentPlanFormat" xml:space="preserve"><value>Rutina habitual: desde {0:HH\:mm}, tras {1} min sin actividad.</value></data>
+  <data name="NoTonightOverride" xml:space="preserve"><value>Sin cambios temporales.</value></data>
+  <data name="OverrideExpiryFormat" xml:space="preserve"><value>El cambio caduca a las {0:HH:mm}.</value></data>
+  <data name="RoutineValid" xml:space="preserve"><value>La rutina es válida.</value></data>
+  <data name="RoutineInvalid" xml:space="preserve"><value>Revisa horarios solapados o valores no válidos.</value></data>
+  <data name="ProtectionUnknownSummary" xml:space="preserve"><value>Falta evidencia requerida. Las acciones automáticas están bloqueadas.</value></data>
+  <data name="ProtectionCountFormat" xml:space="preserve"><value>{0} críticas · {1} temporales · {2} contextuales</value></data>
+  <data name="OnboardingPurposeBody" xml:space="preserve"><value>Hushward vigila por la noche. Solo actúa tras avisarte, detectar inactividad y comprobar que no haya protecciones.</value></data>
+  <data name="OnboardingNeverBody" xml:space="preserve"><value>Nunca actúa en silencio, nunca fuerza el cierre y cualquier actividad cancela el aviso.</value></data>
+  <data name="OnboardingActionLabel" xml:space="preserve"><value>Qué debe hacer</value></data>
+  <data name="OnboardingEarliestLabel" xml:space="preserve"><value>Desde</value></data>
+  <data name="OnboardingLatestLabel" xml:space="preserve"><value>Hasta</value></data>
+  <data name="OnboardingIdleLabel" xml:space="preserve"><value>Minutos sin actividad</value></data>
+  <data name="OnboardingStartupLabel" xml:space="preserve"><value>Iniciar con Windows</value></data>
+  <data name="OnboardingWakeLabel" xml:space="preserve"><value>Permitir activación nocturna para comprobar</value></data>
+  <data name="OnboardingNext" xml:space="preserve"><value>Siguiente</value></data>
+  <data name="OnboardingConfirm" xml:space="preserve"><value>Confirmar y activar</value></data>
+  <data name="HomeReasonLabel" xml:space="preserve"><value>Por qué</value></data>
+  <data name="HomeProtectionCountLabel" xml:space="preserve"><value>Protecciones activas</value></data>
+  <data name="TonightPause" xml:space="preserve"><value>Pausar esta noche</value></data>
+  <data name="TonightPostpone30" xml:space="preserve"><value>Posponer 30 min</value></data>
+  <data name="TonightRequireConfirmation" xml:space="preserve"><value>Pedir confirmación manual</value></data>
+  <data name="RoutineValidate" xml:space="preserve"><value>Comprobar rutina</value></data>
+  <data name="ProtectionPrivacyBody" xml:space="preserve"><value>Las protecciones usan señales locales. No guardamos contenido, títulos de ventana ni historial de navegación.</value></data>
+  <data name="HistoryTitle" xml:space="preserve"><value>Historial local</value></data>
+  <data name="HistoryEmpty" xml:space="preserve"><value>Aún no hay eventos relevantes.</value></data>
+  <data name="DiagnosticsTitle" xml:space="preserve"><value>Diagnóstico local</value></data>
+  <data name="DiagnosticsBody" xml:space="preserve"><value>Estado técnico disponible solo cuando lo necesitas.</value></data>
+  <data name="RecoveryTitle" xml:space="preserve"><value>Recuperación</value></data>
+  <data name="RecoveryBody" xml:space="preserve"><value>Las acciones automáticas permanecen bloqueadas hasta recuperar una configuración válida.</value></data>
+  <data name="TrayStateOff" xml:space="preserve"><value>Desactivado</value></data>
+  <data name="TrayStateReady" xml:space="preserve"><value>Vigilando</value></data>
+  <data name="TrayStateWaiting" xml:space="preserve"><value>Esperando</value></data>
+  <data name="TrayStateProtected" xml:space="preserve"><value>Protegido</value></data>
+  <data name="TrayStateWarning" xml:space="preserve"><value>Aviso activo</value></data>
+  <data name="TrayStateDegraded" xml:space="preserve"><value>Revisión necesaria</value></data>
+  <data name="TrayProtectionCountLabel" xml:space="preserve"><value>Protecciones</value></data>
+  <data name="TrayOpenTonight" xml:space="preserve"><value>Ver esta noche</value></data>
+  <data name="WarningTitle" xml:space="preserve"><value>Hushward va a apagar el equipo</value></data>
+  <data name="WarningCancelHint" xml:space="preserve"><value>Mueve el ratón, pulsa una tecla o elige Cancelar.</value></data>
+  <data name="WarningPostpone15" xml:space="preserve"><value>15 min</value></data>
+  <data name="WarningPostpone30" xml:space="preserve"><value>30 min</value></data>
+  <data name="WarningPostpone60" xml:space="preserve"><value>60 min</value></data>
+  <data name="WarningKeepActiveTomorrow" xml:space="preserve"><value>Mantener activo hasta mañana</value></data>
+  <data name="WarningSecondsFormat" xml:space="preserve"><value>{0} segundos</value></data>
+  <data name="StatusPausedUntilFormat" xml:space="preserve"><value>Pausado hasta las {0:HH:mm}</value></data>
+  <data name="TrayStatusPausedUntilFormat" xml:space="preserve"><value>Hushward · PAUSADO hasta {0:HH:mm}</value></data>
+</root>
