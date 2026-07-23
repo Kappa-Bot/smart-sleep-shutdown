@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Velopack" Version="1.2.0" />
     <ProjectReference Include="..\Hushward.Core\Hushward.Core.csproj" />
     <ProjectReference Include="..\Hushward.Application\Hushward.Application.csproj" />
   </ItemGroup>
@@ -16,4 +17,3 @@
   </ItemGroup>
 
 </Project>
-

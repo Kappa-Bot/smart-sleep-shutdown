@@ -7,6 +7,11 @@
     <ProjectReference Include="..\Hushward.Infrastructure\Hushward.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -22,4 +27,3 @@
   </PropertyGroup>
 
 </Project>
-
