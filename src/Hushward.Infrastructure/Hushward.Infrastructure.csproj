@@ -11,6 +11,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-</Project>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Hushward.Infrastructure.Tests" />
+  </ItemGroup>
 
+</Project>
 
