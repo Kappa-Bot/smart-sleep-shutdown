@@ -38,7 +38,7 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(new TimeOnly(2, 30), settings.StartTime);
         Assert.Equal(TimeSpan.FromMinutes(20), settings.IdleThreshold);
         Assert.False(settings.ContextChecksEnabled);
-        Assert.Equal("Activo desde 02:30 hasta 06:00 | Inactividad 20 min | Contexto off", viewModel.ScheduleSummaryText);
+        Assert.Equal("Activo desde 02:30 hasta 06:00 · Inactividad 20 min · Protecciones desactivadas", viewModel.ScheduleSummaryText);
     }
 
     [Fact]
@@ -85,8 +85,8 @@ public sealed class MainWindowViewModelTests
         Assert.False(viewModel.IsEnabled);
         Assert.True(viewModel.IsTemporarilyDisabled);
         Assert.Equal(new DateTimeOffset(2026, 4, 26, 0, 0, 0, TimeSpan.Zero), viewModel.TemporarilyDisabledUntil);
-        Assert.Equal("Pausado hasta manana", viewModel.StatusText);
-        Assert.Equal("Hushward - PAUSADO hasta manana", viewModel.TrayStatusText);
+        Assert.Equal("Pausado hasta mañana", viewModel.StatusText);
+        Assert.Equal("Hushward · PAUSADO hasta mañana", viewModel.TrayStatusText);
         Assert.False(viewModel.CreateSettings().Enabled);
     }
 
@@ -104,7 +104,7 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.IsEnabled);
         Assert.False(viewModel.IsTemporarilyDisabled);
         Assert.Null(viewModel.TemporarilyDisabledUntil);
-        Assert.Equal("Hushward - ACTIVO - Vigilando", viewModel.TrayStatusText);
+        Assert.Equal("Hushward · ACTIVO · Vigilando", viewModel.TrayStatusText);
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.False(viewModel.IsEnabled);
         Assert.False(viewModel.IsTemporarilyDisabled);
-        Assert.Equal("Hushward - DESACTIVADO", viewModel.TrayStatusText);
+        Assert.Equal("Hushward · DESACTIVADO", viewModel.TrayStatusText);
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public sealed class MainWindowViewModelTests
 
         viewModel.IsEnabled = true;
 
-        await WaitUntilAsync(() => viewModel.StatusText == "Usa hora HH:mm");
+        await WaitUntilAsync(() => viewModel.StatusText == "Usa una hora con formato HH:mm");
         Assert.False(viewModel.CreateSettings().Enabled);
         Assert.False(viewModel.IsCountdownActive);
     }
@@ -248,7 +248,7 @@ public sealed class MainWindowViewModelTests
 
         viewModel.IsEnabled = true;
 
-        await WaitUntilAsync(() => viewModel.StatusText == "Bloqueado: detector");
+        await WaitUntilAsync(() => viewModel.StatusText == "Bloqueado: detector no disponible");
         Assert.False(viewModel.IsCountdownActive);
         Assert.Equal(0, shutdownExecutor.CallCount);
     }
@@ -267,7 +267,7 @@ public sealed class MainWindowViewModelTests
         viewModel.IsEnabled = true;
 
         await WaitUntilAsync(() => viewModel.StatusText == "Inactivo 12/15 min");
-        Assert.Equal("Hushward - ACTIVO - Inactivo 12/15 min", viewModel.TrayStatusText);
+        Assert.Equal("Hushward · ACTIVO · Inactivo 12/15 min", viewModel.TrayStatusText);
     }
 
     [Fact]
@@ -280,7 +280,7 @@ public sealed class MainWindowViewModelTests
             ContextChecksEnabled = false
         };
 
-        Assert.Equal("Activo desde 03:10 hasta 06:00 | Inactividad 22 min | Contexto off", viewModel.ScheduleSummaryText);
+        Assert.Equal("Activo desde 03:10 hasta 06:00 · Inactividad 22 min · Protecciones desactivadas", viewModel.ScheduleSummaryText);
     }
 
     [Fact]
@@ -332,7 +332,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.Null(exception);
         Assert.True(viewModel.IsEnabled);
-        Assert.Equal("No se pudo guardar la configuracion", viewModel.SettingsWarningText);
+        Assert.Equal("No se pudo guardar la configuración", viewModel.SettingsWarningText);
         Assert.True(viewModel.IsSettingsWarningVisible);
     }
 
@@ -455,4 +455,3 @@ public sealed class MainWindowViewModelTests
         }
     }
 }
-

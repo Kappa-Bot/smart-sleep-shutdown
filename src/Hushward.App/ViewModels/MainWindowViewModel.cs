@@ -1,7 +1,11 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using Hushward.App.Localization;
+using Hushward.App.Runtime;
+using Hushward.Application.Runtime;
 using Hushward.App.Settings;
 using Hushward.Core.Abstractions;
 using Hushward.Core.Models;
@@ -17,6 +21,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private readonly ISystemClock? _clock;
     private readonly Action<Action> _marshalToUi;
     private readonly IUserSettingsStore? _settingsStore;
+    private readonly IWarningSessionController? _warningSession;
+    private readonly RuntimeSnapshotPublisher? _runtimeSnapshots;
     private readonly DecisionEngine _decisionEngine = new();
     private readonly RelayCommand _cancelShutdownCommand;
     private readonly RelayCommand _disableUntilTomorrowCommand;
@@ -26,8 +32,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private bool _disposed;
     private bool _resumeAfterTemporaryDisable;
     private bool _isEnabled;
-    private string _statusText = "Desactivado";
-    private string _trayStatusText = "Hushward - DESACTIVADO";
+    private string _statusText = UiText.StatusDisabled;
+    private string _trayStatusText = UiText.TrayStatusDisabled;
     private string _settingsWarningText = string.Empty;
     private string _startTimeText = "01:00";
     private int _idleThresholdMinutes = 15;
@@ -43,7 +49,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         IShutdownExecutor? shutdownExecutor = null,
         ISystemClock? clock = null,
         Action<Action>? marshalToUi = null,
-        IUserSettingsStore? settingsStore = null)
+        IUserSettingsStore? settingsStore = null,
+        IWarningSessionController? warningSession = null,
+        RuntimeSnapshotPublisher? runtimeSnapshots = null)
     {
         _idleDetector = idleDetector;
         _contextDetector = contextDetector;
@@ -51,6 +59,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _clock = clock;
         _marshalToUi = marshalToUi ?? (action => action());
         _settingsStore = settingsStore;
+        _warningSession = warningSession;
+        _runtimeSnapshots = runtimeSnapshots;
         _cancelShutdownCommand = new RelayCommand(CancelCountdownByUser, () => IsCountdownActive);
         _disableUntilTomorrowCommand = new RelayCommand(DisableUntilTomorrow, () => !IsTemporarilyDisabled);
 
@@ -96,6 +106,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             if (SetField(ref _statusText, value))
             {
                 UpdateTrayStatus();
+                PublishRuntimeState();
             }
         }
     }
@@ -176,8 +187,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             var start = TimeOnly.TryParse(StartTimeText, out var parsedStart)
                 ? parsedStart.ToString("HH:mm")
                 : "HH:mm";
-            var context = ContextChecksEnabled ? "Contexto on" : "Contexto off";
-            return $"Activo desde {start} hasta 06:00 | Inactividad {IdleThresholdMinutes} min | {context}";
+            var context = ContextChecksEnabled ? UiText.ContextOn : UiText.ContextOff;
+            return Format(UiText.ScheduleSummaryFormat, start, IdleThresholdMinutes, context);
         }
     }
 
@@ -189,6 +200,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             if (SetField(ref _isCountdownActive, value))
             {
                 _cancelShutdownCommand.RaiseCanExecuteChanged();
+                PublishRuntimeState();
             }
         }
     }
@@ -244,9 +256,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
 
         _decisionEngine.CancelAndRequireRearm();
+        _ = _warningSession?.InvalidateForInputAsync();
         IsCountdownActive = false;
         CountdownSecondsRemaining = 0;
-        StatusText = "Cancelado por actividad";
+        StatusText = UiText.StatusCancelledActivity;
     }
 
     public void DisableUntilTomorrow()
@@ -257,7 +270,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _resumeAfterTemporaryDisable = IsEnabled;
         TemporarilyDisabledUntil = new DateTimeOffset(now.Date.AddDays(1), now.Offset);
         IsEnabled = false;
-        StatusText = "Pausado hasta manana";
+        StatusText = UiText.StatusPausedTomorrow;
 
         if (_idleDetector is not null || _contextDetector is not null || _shutdownExecutor is not null)
         {
@@ -271,7 +284,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         ClearTemporaryDisable();
         IsEnabled = true;
-        StatusText = "Vigilando";
+        StatusText = UiText.StatusWatching;
     }
 
     public void RunScheduledCheck()
@@ -300,7 +313,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
         else
         {
-            StatusText = "Desactivado";
+            StatusText = UiText.StatusDisabled;
             UpdateTrayStatus();
         }
     }
@@ -319,7 +332,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void StartMonitoring()
     {
-        StatusText = "Vigilando";
+        StatusText = UiText.StatusWatching;
 
         if (_idleDetector is null || _contextDetector is null || _shutdownExecutor is null || _clock is null)
         {
@@ -334,13 +347,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void StopMonitoring()
     {
+        _ = _warningSession?.InvalidateForProtectionAsync();
         _monitoringCancellation?.Cancel();
         _monitoringCancellation?.Dispose();
         _monitoringCancellation = null;
         _decisionEngine.Disable();
         IsCountdownActive = false;
         CountdownSecondsRemaining = 0;
-        StatusText = "Desactivado";
+        StatusText = UiText.StatusDisabled;
     }
 
     private void StartTemporaryDisableWatcher()
@@ -392,7 +406,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                     {
                         IsCountdownActive = false;
                         CountdownSecondsRemaining = 0;
-                        StatusText = "Usa hora HH:mm";
+                        StatusText = UiText.StatusInvalidTime;
                     });
                     await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken).ConfigureAwait(false);
                     continue;
@@ -405,8 +419,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 {
                     var wakeTime = now + delayBeforeEvaluation;
                     ApplyUi(() => StatusText = delayBeforeEvaluation > MonitoringSchedule.PrecheckLeadTime
-                        ? $"Durmiendo hasta {wakeTime:HH:mm}"
-                        : $"Listo para {settings.StartTime:HH:mm}");
+                        ? Format(UiText.StatusSleepingUntilFormat, wakeTime)
+                        : Format(UiText.StatusReadyForFormat, settings.StartTime));
                     await Task.Delay(delayBeforeEvaluation, cancellationToken).ConfigureAwait(false);
                     continue;
                 }
@@ -420,12 +434,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
         catch
         {
+            if (_warningSession is not null)
+            {
+                await _warningSession.InvalidateForProtectionAsync().ConfigureAwait(false);
+            }
+
             ApplyUi(() =>
             {
                 _decisionEngine.CancelAndRequireRearm();
                 IsCountdownActive = false;
                 CountdownSecondsRemaining = 0;
-                StatusText = "Vigilancia pausada";
+                StatusText = UiText.StatusMonitoringPaused;
             });
         }
     }
@@ -450,7 +469,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             {
                 IsCountdownActive = false;
                 CountdownSecondsRemaining = 0;
-                StatusText = "Bloqueado: detector";
+                StatusText = UiText.StatusDetectorBlocked;
             });
             return TimeSpan.FromMinutes(1);
         }
@@ -465,20 +484,32 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         switch (result.Action)
         {
             case ShutdownDecisionAction.StartWarning:
+                if (_warningSession is not null)
+                {
+                    await _warningSession
+                        .StartAsync(settings.WarningDuration, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+
                 ApplyUi(() =>
                 {
                     IsCountdownActive = true;
                     CountdownSecondsRemaining = (int)settings.WarningDuration.TotalSeconds;
-                    StatusText = "Apagado en 60 segundos";
+                    StatusText = UiText.StatusShutdownCountdown;
                 });
                 break;
 
             case ShutdownDecisionAction.CancelWarning:
+                if (_warningSession is not null)
+                {
+                    await _warningSession.InvalidateForProtectionAsync().ConfigureAwait(false);
+                }
+
                 ApplyUi(() =>
                 {
                     IsCountdownActive = false;
                     CountdownSecondsRemaining = 0;
-                    StatusText = "Vigilando";
+                    StatusText = UiText.StatusWatching;
                 });
                 break;
 
@@ -487,7 +518,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 {
                     IsCountdownActive = false;
                     CountdownSecondsRemaining = 0;
-                    StatusText = "Apagando";
+                    StatusText = UiText.StatusShuttingDown;
                 });
                 await _shutdownExecutor.ShutdownNowAsync(cancellationToken).ConfigureAwait(false);
                 break;
@@ -513,7 +544,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             var remaining = settings.WarningDuration - elapsed;
             IsCountdownActive = true;
             CountdownSecondsRemaining = Math.Max(0, (int)Math.Ceiling(remaining.TotalSeconds));
-            StatusText = "Apagado en 60 segundos";
+            StatusText = UiText.StatusShutdownCountdown;
             return;
         }
 
@@ -522,20 +553,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
         if (!MonitoringSchedule.IsInsideEvaluationWindow(settings, now))
         {
-            StatusText = $"Esperando hasta {settings.StartTime:HH:mm}";
+            StatusText = Format(UiText.StatusWaitingUntilFormat, settings.StartTime);
         }
         else if (ContextBlockingPolicy.BlocksShutdown(settings, idle, context))
         {
             var reason = context.Blockers.FirstOrDefault()?.Description;
             StatusText = string.IsNullOrWhiteSpace(reason)
-                ? "Bloqueado por actividad"
-                : $"Bloqueado: {reason}";
+                ? UiText.StatusBlockedActivity
+                : Format(UiText.StatusBlockedFormat, reason);
         }
         else
         {
             StatusText = idle.IdleDuration > settings.IdleThreshold
-                ? "Listo para avisar"
-                : $"Inactivo {(int)idle.IdleDuration.TotalMinutes}/{(int)settings.IdleThreshold.TotalMinutes} min";
+                ? UiText.StatusReadyToWarn
+                : Format(
+                    UiText.StatusIdleProgressFormat,
+                    (int)idle.IdleDuration.TotalMinutes,
+                    (int)settings.IdleThreshold.TotalMinutes);
         }
     }
 
@@ -549,9 +583,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         if (IsCountdownActive)
         {
             _decisionEngine.CancelAndRequireRearm();
+            _ = _warningSession?.InvalidateForProtectionAsync();
             IsCountdownActive = false;
             CountdownSecondsRemaining = 0;
-            StatusText = "Vigilando";
+            StatusText = UiText.StatusWatching;
         }
 
         if (IsEnabled && !IsTemporarilyDisabled)
@@ -602,7 +637,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
         else if (IsTemporarilyDisabled)
         {
-            StatusText = "Pausado hasta manana";
+            StatusText = UiText.StatusPausedTomorrow;
             StartTemporaryDisableWatcher();
         }
     }
@@ -627,11 +662,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
         catch (IOException)
         {
-            SettingsWarningText = "No se pudo guardar la configuracion";
+            SettingsWarningText = UiText.SettingsSaveFailed;
         }
         catch (UnauthorizedAccessException)
         {
-            SettingsWarningText = "No se pudo guardar la configuracion";
+            SettingsWarningText = UiText.SettingsSaveFailed;
         }
     }
 
@@ -650,17 +685,82 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         if (IsTemporarilyDisabled)
         {
-            TrayStatusText = "Hushward - PAUSADO hasta manana";
+            TrayStatusText = UiText.TrayStatusPausedTomorrow;
         }
         else if (IsEnabled)
         {
-            TrayStatusText = $"Hushward - ACTIVO - {StatusText}";
+            TrayStatusText = Format(UiText.TrayStatusActiveFormat, StatusText);
         }
         else
         {
-            TrayStatusText = "Hushward - DESACTIVADO";
+            TrayStatusText = UiText.TrayStatusDisabled;
         }
     }
+
+    private void PublishRuntimeState()
+    {
+        if (_runtimeSnapshots is null)
+        {
+            return;
+        }
+
+        var latest = _runtimeSnapshots.Latest;
+        var state = ResolveRuntimeState();
+        var code = IsTemporarilyDisabled
+            ? "status.paused-today"
+            : state switch
+            {
+                RuntimeState.Disabled => "status.disabled",
+                RuntimeState.WaitingForWindow => "status.waiting-window",
+                RuntimeState.Protected => "status.protected",
+                RuntimeState.Warning => "status.warning",
+                RuntimeState.Executing => "status.executing",
+                RuntimeState.SafeMode => "status.safe-mode",
+                _ => "status.monitoring"
+            };
+        var now = CurrentTime;
+        _runtimeSnapshots.Publish(latest with
+        {
+            Sequence = latest.Sequence + 1,
+            CapturedAt = now,
+            MonitoringState = state,
+            LastMeaningfulEvent = new RuntimeEvent(code, now, latest.PrimaryReason)
+        });
+    }
+
+    private RuntimeState ResolveRuntimeState()
+    {
+        if (!IsEnabled || IsTemporarilyDisabled)
+        {
+            return RuntimeState.Disabled;
+        }
+
+        if (IsCountdownActive)
+        {
+            return RuntimeState.Warning;
+        }
+
+        if (StatusText.StartsWith(UiText.StatusBlockedFormat.Split('{')[0], StringComparison.CurrentCulture) ||
+            StatusText == UiText.StatusBlockedActivity ||
+            StatusText == UiText.StatusDetectorBlocked)
+        {
+            return RuntimeState.Protected;
+        }
+
+        if (StatusText.StartsWith(UiText.StatusSleepingUntilFormat.Split('{')[0], StringComparison.CurrentCulture) ||
+            StatusText.StartsWith(UiText.StatusReadyForFormat.Split('{')[0], StringComparison.CurrentCulture) ||
+            StatusText.StartsWith(UiText.StatusWaitingUntilFormat.Split('{')[0], StringComparison.CurrentCulture))
+        {
+            return RuntimeState.WaitingForWindow;
+        }
+
+        return StatusText == UiText.StatusShuttingDown
+            ? RuntimeState.Executing
+            : RuntimeState.Monitoring;
+    }
+
+    private static string Format(string format, params object?[] args) =>
+        string.Format(CultureInfo.CurrentCulture, format, args);
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
@@ -679,4 +779,3 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
-

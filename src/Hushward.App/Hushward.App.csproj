@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Velopack" Version="1.2.0" />
     <ProjectReference Include="..\Hushward.Core\Hushward.Core.csproj" />
     <ProjectReference Include="..\Hushward.Application\Hushward.Application.csproj" />
     <ProjectReference Include="..\Hushward.Infrastructure\Hushward.Infrastructure.csproj" />
@@ -16,9 +17,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <StartupObject>Hushward.App.Program</StartupObject>
+    <ApplicationIcon>Assets\Hushward.ico</ApplicationIcon>
   </PropertyGroup>
 
 </Project>
-
-
 

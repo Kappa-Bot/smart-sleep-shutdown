@@ -1,38 +1,38 @@
-using System.Windows;
-using System.Windows.Input;
-using System.Media;
 using System.ComponentModel;
-using Hushward.App.Settings;
+using System.Media;
+using System.Windows;
 using Hushward.App.ViewModels;
-using Hushward.Infrastructure.Power;
-using Hushward.Infrastructure.System;
 
-namespace Hushward.App;
+namespace Hushward.App.Views;
 
-public partial class MainWindow : Window
+public partial class ShellWindow : Window
 {
-    private readonly MainWindowViewModel _viewModel;
+    private readonly ShellViewModel _viewModel;
+    private readonly Func<IDisposable> _sleepBlockerFactory;
     private readonly TrayIconService _trayIcon;
-    private WindowsSystemSleepBlocker? _sleepBlocker;
+    private IDisposable? _sleepBlocker;
     private bool _exitRequested;
 
-    public MainWindow()
+    public ShellWindow(
+        ShellViewModel viewModel,
+        Func<IDisposable> sleepBlockerFactory)
     {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        ArgumentNullException.ThrowIfNull(sleepBlockerFactory);
+
         InitializeComponent();
-
-        var clock = new SystemClock();
-        _viewModel = new MainWindowViewModel(
-            new Win32IdleDetector(clock),
-            AggregateContextDetector.CreateDefault(),
-            new WindowsShutdownExecutor(),
-            clock,
-            action => Dispatcher.Invoke(action),
-            JsonUserSettingsStore.CreateDefault());
-
-        DataContext = _viewModel;
+        _viewModel = viewModel;
+        _sleepBlockerFactory = sleepBlockerFactory;
+        DataContext = viewModel;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _trayIcon = new TrayIconService(_viewModel, ShowMainWindow, ExitApplication);
     }
+
+    public void ShowFromUserRequest() => ShowMainWindow();
+
+    public void RunScheduledCheck() => _viewModel.RunScheduledCheck();
+
+    public void AllowExit() => _exitRequested = true;
 
     protected override void OnPreviewMouseMove(System.Windows.Input.MouseEventArgs e)
     {
@@ -44,15 +44,6 @@ public partial class MainWindow : Window
     {
         _viewModel.CancelCountdownFromInput();
         base.OnPreviewKeyDown(e);
-    }
-
-    protected override void OnClosed(EventArgs e)
-    {
-        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
-        StopPreventingSleep();
-        _trayIcon.Dispose();
-        _viewModel.Dispose();
-        base.OnClosed(e);
     }
 
     protected override void OnClosing(CancelEventArgs e)
@@ -68,24 +59,18 @@ public partial class MainWindow : Window
         base.OnClosing(e);
     }
 
-    public void ShowFromUserRequest()
+    protected override void OnClosed(EventArgs e)
     {
-        ShowMainWindow();
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        StopPreventingSleep();
+        _trayIcon.Dispose();
+        _viewModel.Dispose();
+        base.OnClosed(e);
     }
 
-    public void RunScheduledCheck()
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        _viewModel.RunScheduledCheck();
-    }
-
-    public void AllowExit()
-    {
-        _exitRequested = true;
-    }
-
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName != nameof(MainWindowViewModel.IsCountdownActive))
+        if (e.PropertyName != nameof(ShellViewModel.IsCountdownActive))
         {
             return;
         }
@@ -103,20 +88,13 @@ public partial class MainWindow : Window
 
     private void ShowWarningNotification()
     {
-        if (WindowState == WindowState.Minimized)
-        {
-            WindowState = WindowState.Normal;
-        }
-
-        Show();
-        Activate();
+        ShowMainWindow();
         SystemSounds.Exclamation.Play();
     }
 
     private void ShowMainWindow()
     {
         Show();
-
         if (WindowState == WindowState.Minimized)
         {
             WindowState = WindowState.Normal;
@@ -134,7 +112,7 @@ public partial class MainWindow : Window
 
     private void StartPreventingSleep()
     {
-        _sleepBlocker ??= WindowsSystemSleepBlocker.Start();
+        _sleepBlocker ??= _sleepBlockerFactory();
     }
 
     private void StopPreventingSleep()
@@ -143,4 +121,3 @@ public partial class MainWindow : Window
         _sleepBlocker = null;
     }
 }
-

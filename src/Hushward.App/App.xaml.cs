@@ -1,4 +1,11 @@
 using System.Windows;
+using Hushward.App.Settings;
+using Hushward.App.Runtime;
+using Hushward.App.ViewModels;
+using Hushward.App.Views;
+using Hushward.Application.Runtime;
+using Hushward.Infrastructure.Power;
+using Hushward.Infrastructure.System;
 
 namespace Hushward.App;
 
@@ -42,7 +49,7 @@ public partial class App : System.Windows.Application
             return;
         }
 
-        var mainWindow = new MainWindow();
+        var mainWindow = CreateShellWindow();
         MainWindow = mainWindow;
         _singleInstance.StartActivationListener(() => Dispatcher.Invoke(mainWindow.ShowFromUserRequest));
         _singleInstance.StartExitListener(() => Dispatcher.Invoke(() =>
@@ -60,7 +67,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
     {
-        if (MainWindow is MainWindow mainWindow)
+        if (MainWindow is ShellWindow mainWindow)
         {
             mainWindow.AllowExit();
         }
@@ -73,5 +80,35 @@ public partial class App : System.Windows.Application
         _singleInstance?.Dispose();
         base.OnExit(e);
     }
-}
 
+    private ShellWindow CreateShellWindow()
+    {
+        var clock = new SystemClock();
+        var idleDetector = new Win32IdleDetector(clock);
+        var contextDetector = AggregateContextDetector.CreateDefault();
+        var snapshots = new RuntimeSnapshotPublisher(NightRuntimeSnapshot.Empty(0, clock.Now));
+        MainWindowViewModel? viewModel = null;
+        var shutdownExecutor = new CoordinatedShutdownExecutor(
+            idleDetector,
+            contextDetector,
+            clock,
+            () => viewModel?.CreateSettings() ?? throw new InvalidOperationException("View model is not ready."),
+            new WindowsNightActionExecutor(),
+            snapshots);
+        viewModel = new MainWindowViewModel(
+            idleDetector,
+            contextDetector,
+            shutdownExecutor,
+            clock,
+            action => Dispatcher.Invoke(action),
+            JsonUserSettingsStore.CreateDefault(),
+            shutdownExecutor,
+            snapshots);
+
+        var shellViewModel = new ShellViewModel(
+            viewModel,
+            snapshots,
+            action => Dispatcher.Invoke(action));
+        return new ShellWindow(shellViewModel, WindowsSystemSleepBlocker.Start);
+    }
+}

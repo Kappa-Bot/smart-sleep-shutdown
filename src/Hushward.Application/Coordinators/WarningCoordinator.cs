@@ -23,6 +23,34 @@ public sealed class WarningCoordinator
         _nightGuardCoordinator = nightGuardCoordinator;
     }
 
+    public Task<long> StartAsync(
+        NightAction action,
+        TimeSpan duration,
+        DateTimeOffset startedAt)
+    {
+        var latest = _publisher.Latest;
+        if (latest.WarningState.Kind == WarningStateKind.Active)
+        {
+            return Task.FromResult(latest.Sequence);
+        }
+
+        var sequence = latest.Sequence + 1;
+        _publisher.Publish(latest with
+        {
+            Sequence = sequence,
+            CapturedAt = startedAt,
+            MonitoringState = RuntimeState.Warning,
+            Decision = NightDecision.Ready(action, DecisionReasonCode.Ready, duration),
+            PrimaryReason = DecisionReasonCode.Ready,
+            SupportingReasons = [],
+            WarningState = WarningState.Active(startedAt),
+            ActionExecutionState = ActionExecutionState.None,
+            LastMeaningfulEvent = new RuntimeEvent("warning.started", startedAt, DecisionReasonCode.Ready)
+        });
+
+        return Task.FromResult(sequence);
+    }
+
     public Task InvalidateAsync(WarningInvalidation invalidation)
     {
         var latest = _publisher.Latest;

@@ -13,6 +13,25 @@ namespace Hushward.Application.Tests.Coordinators;
 public sealed class WarningCoordinatorTests
 {
     [Fact]
+    public async Task StartPublishesSingleActiveWarningSequence()
+    {
+        var startedAt = DateTimeOffset.Parse("2026-07-23T01:00:00Z");
+        var publisher = new RuntimeSnapshotPublisher(TestSnapshots.Create(sequence: 12));
+        var warning = new WarningCoordinator(
+            publisher,
+            new ActionCoordinator(new RecordingNightActionExecutor()),
+            new NightGuardCoordinator(publisher));
+
+        var first = await warning.StartAsync(NightAction.ShutDown, TimeSpan.FromSeconds(60), startedAt);
+        var duplicate = await warning.StartAsync(NightAction.ShutDown, TimeSpan.FromSeconds(60), startedAt);
+
+        Assert.Equal(13, first);
+        Assert.Equal(first, duplicate);
+        Assert.Equal(WarningStateKind.Active, publisher.Latest.WarningState.Kind);
+        Assert.Equal(NightDecisionKind.ReadyToWarn, publisher.Latest.Decision!.Kind);
+    }
+
+    [Fact]
     public async Task Input_event_invalidates_active_warning()
     {
         var publisher = new RuntimeSnapshotPublisher(TestSnapshots.Create(sequence: 12) with

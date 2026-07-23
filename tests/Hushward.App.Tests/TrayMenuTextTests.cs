@@ -7,7 +7,7 @@ public sealed class TrayMenuTextTests
     [Fact]
     public void DisableUntilTomorrowTextIsReadableAscii()
     {
-        Assert.Equal("Pausar hasta manana", TrayMenuText.DisableUntilTomorrow);
+        Assert.Equal("Pausar hasta mañana", TrayMenuText.DisableUntilTomorrow);
     }
 
     [Fact]
@@ -21,7 +21,6 @@ public sealed class TrayMenuTextTests
     public void TrayMenuUsesClearSpanishActions()
     {
         Assert.Equal("Ver ventana", TrayMenuText.Open);
-        Assert.Equal("Pausar hasta manana", TrayMenuText.DisableUntilTomorrow);
+        Assert.Equal("Pausar hasta mañana", TrayMenuText.DisableUntilTomorrow);
     }
 }
-

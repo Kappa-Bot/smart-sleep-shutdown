@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Windows.Data;
+using Hushward.App.Localization;
 
 namespace Hushward.App.ViewModels;
 
@@ -11,13 +12,12 @@ public static class BooleanBoxes
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value is bool enabled && enabled ? "Activado" : "Desactivado";
+            return value is bool enabled && enabled ? UiText.EnabledText : UiText.DisabledText;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value is string text && string.Equals(text, "Activado", StringComparison.OrdinalIgnoreCase);
+            return value is string text && string.Equals(text, UiText.EnabledText, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
-

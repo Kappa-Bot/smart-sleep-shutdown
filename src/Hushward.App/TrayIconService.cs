@@ -6,7 +6,7 @@ namespace Hushward.App;
 
 public sealed class TrayIconService : IDisposable
 {
-    private readonly MainWindowViewModel _viewModel;
+    private readonly ShellViewModel _viewModel;
     private readonly Action _openWindow;
     private readonly Action _exitApplication;
     private readonly Forms.NotifyIcon _notifyIcon;
@@ -14,7 +14,7 @@ public sealed class TrayIconService : IDisposable
     private Drawing.Icon? _currentIcon;
 
     public TrayIconService(
-        MainWindowViewModel viewModel,
+        ShellViewModel viewModel,
         Action openWindow,
         Action exitApplication)
     {
@@ -68,9 +68,9 @@ public sealed class TrayIconService : IDisposable
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(MainWindowViewModel.TrayStatusText)
-            or nameof(MainWindowViewModel.IsEnabled)
-            or nameof(MainWindowViewModel.IsTemporarilyDisabled))
+        if (e.PropertyName is nameof(ShellViewModel.TrayStatusText)
+            or nameof(ShellViewModel.IsEnabled)
+            or nameof(ShellViewModel.IsTemporarilyDisabled))
         {
             _notifyIcon.Text = ShortTooltip(_viewModel.TrayStatusText);
             UpdateIcon();
@@ -142,4 +142,3 @@ public sealed class TrayIconService : IDisposable
         return text.Length <= 63 ? text : text[..63];
     }
 }
-

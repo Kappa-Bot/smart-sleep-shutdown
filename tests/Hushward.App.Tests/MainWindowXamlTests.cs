@@ -5,7 +5,7 @@ public sealed class MainWindowXamlTests
     [Fact]
     public void CountdownBindingIsOneWayBecauseViewModelPropertyIsReadOnly()
     {
-        var xaml = File.ReadAllText(FindProjectFile("src", "Hushward.App", "MainWindow.xaml"));
+        var xaml = ReadShell();
 
         Assert.Contains("CountdownSecondsRemaining, Mode=OneWay", xaml);
         Assert.DoesNotContain("Text=\"{Binding CountdownSecondsRemaining}\"", xaml);
@@ -14,27 +14,25 @@ public sealed class MainWindowXamlTests
     [Fact]
     public void WindowExplainsThatCloseKeepsTrayIcon()
     {
-        var xaml = File.ReadAllText(FindProjectFile("src", "Hushward.App", "MainWindow.xaml"));
+        var xaml = ReadShell();
 
-        Assert.Contains("Al cerrar, sigue activo junto al reloj", xaml);
-        Assert.Contains("Hushward", xaml);
+        Assert.Contains("loc:UiText.FooterHint", xaml);
+        Assert.Contains("loc:UiText.AppTitle", xaml);
     }
 
     [Fact]
     public void WindowShowsClearSafetyAndTrayHints()
     {
-        var xaml = File.ReadAllText(FindProjectFile("src", "Hushward.App", "MainWindow.xaml"));
+        var xaml = ReadShell();
 
-        Assert.Contains("1. Avisa 60 segundos", xaml);
-        Assert.Contains("2. Cancela con actividad", xaml);
-        Assert.Contains("3. Revisa bloqueos", xaml);
-        Assert.Contains("Icono verde activo", xaml);
+        Assert.Contains("loc:UiText.NoSilentShutdownHint", xaml);
+        Assert.Contains("loc:UiText.ProtectionsHint", xaml);
     }
 
     [Fact]
     public void WindowCanShowSettingsSaveWarning()
     {
-        var xaml = File.ReadAllText(FindProjectFile("src", "Hushward.App", "MainWindow.xaml"));
+        var xaml = ReadShell();
 
         Assert.Contains("SettingsWarningText", xaml);
         Assert.Contains("IsSettingsWarningVisible", xaml);
@@ -43,7 +41,7 @@ public sealed class MainWindowXamlTests
     [Fact]
     public void WindowShowsDynamicScheduleSummary()
     {
-        var xaml = File.ReadAllText(FindProjectFile("src", "Hushward.App", "MainWindow.xaml"));
+        var xaml = ReadShell();
 
         Assert.Contains("ScheduleSummaryText", xaml);
     }
@@ -51,7 +49,7 @@ public sealed class MainWindowXamlTests
     [Fact]
     public void WindowUsesBrandedIconAndDynamicStatusDot()
     {
-        var xaml = File.ReadAllText(FindProjectFile("src", "Hushward.App", "MainWindow.xaml"));
+        var xaml = ReadShell();
 
         Assert.Contains("Icon=\"{StaticResource AppIconImage}\"", xaml);
         Assert.Contains("Fill=\"{Binding HeaderStatusBrush}\"", xaml);
@@ -60,7 +58,7 @@ public sealed class MainWindowXamlTests
     [Fact]
     public void SettingsTextBoxesCommitOnLostFocusToAvoidRestartingMonitorPerKeystroke()
     {
-        var xaml = File.ReadAllText(FindProjectFile("src", "Hushward.App", "MainWindow.xaml"));
+        var xaml = ReadShell();
 
         Assert.Contains("StartTimeText, UpdateSourceTrigger=LostFocus", xaml);
         Assert.Contains("IdleThresholdMinutes, UpdateSourceTrigger=LostFocus", xaml);
@@ -71,7 +69,7 @@ public sealed class MainWindowXamlTests
     [Fact]
     public void WindowUsesScrollViewerToPreventVerticalClipping()
     {
-        var xaml = File.ReadAllText(FindProjectFile("src", "Hushward.App", "MainWindow.xaml"));
+        var xaml = ReadShell();
 
         Assert.Contains("<ScrollViewer", xaml);
         Assert.Contains("VerticalScrollBarVisibility=\"Auto\"", xaml);
@@ -81,7 +79,7 @@ public sealed class MainWindowXamlTests
     [Fact]
     public void FooterUsesGridLayoutToPreventTextButtonOverlap()
     {
-        var xaml = File.ReadAllText(FindProjectFile("src", "Hushward.App", "MainWindow.xaml"));
+        var xaml = ReadShell();
 
         Assert.Contains("x:Name=\"FooterLayout\"", xaml);
         Assert.Contains("<ColumnDefinition Width=\"*\" />", xaml);
@@ -91,14 +89,17 @@ public sealed class MainWindowXamlTests
     [Fact]
     public void WindowUsesPremiumMinimalVisualSystem()
     {
-        var xaml = File.ReadAllText(FindProjectFile("src", "Hushward.App", "MainWindow.xaml"));
+        var xaml = ReadShell();
 
-        Assert.Contains("HeaderGradientBrush", xaml);
-        Assert.Contains("PrimaryToggleStyle", xaml);
-        Assert.Contains("CardStyle", xaml);
+        Assert.Contains("DeepNightBrush", xaml);
+        Assert.Contains("HushwardToggleStyle", xaml);
+        Assert.Contains("SurfaceCardStyle", xaml);
         Assert.Contains("StatusBadgeText", xaml);
-        Assert.Contains("Juego o pantalla completa no bloquea tras 1h sin actividad", xaml);
+        Assert.Contains("loc:UiText.ProtectionsHint", xaml);
     }
+
+    private static string ReadShell() =>
+        File.ReadAllText(FindProjectFile("src", "Hushward.App", "Views", "ShellWindow.xaml"));
 
     private static string FindProjectFile(params string[] pathParts)
     {
@@ -118,4 +119,3 @@ public sealed class MainWindowXamlTests
         throw new FileNotFoundException($"Could not find {Path.Combine(pathParts)} from {AppContext.BaseDirectory}.");
     }
 }
-
