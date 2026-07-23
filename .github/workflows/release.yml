@@ -1,0 +1,43 @@
+name: Release draft
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Require annotated tag
+        shell: pwsh
+        run: |
+          if ((git cat-file -t "${{ github.ref_name }}") -ne "tag") {
+            throw "Release tags must be annotated."
+          }
+      - name: Verify
+        shell: pwsh
+        run: ./scripts/Verify-Release.ps1
+      - name: Package
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          ./scripts/Package-Hushward.ps1 -Version $version
+      - name: Create unsigned draft
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" artifacts/releases/* `
+            --draft `
+            --title "Hushward ${{ github.ref_name }}" `
+            --notes "Unsigned candidate. Hardware QA and code-signing approval remain required."

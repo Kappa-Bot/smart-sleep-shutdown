@@ -26,11 +26,11 @@ This repository is optimized for future AI agents. Keep the app focused: one Win
 Run before claiming completion:
 
 ```powershell
-dotnet format .\Hushward.sln --verify-no-changes
-dotnet build .\Hushward.sln
-dotnet test .\Hushward.sln
-.\scripts\Install-Local.ps1
+.\scripts\Verify-Release.ps1
 ```
+
+Never mark real power, wake, mixed-DPI, Narrator, rollback, or uninstall gates
+complete without recorded evidence in `docs/quality/MANUAL-QA.md`.
 
 Manual startup check:
 
@@ -44,10 +44,10 @@ Get-Process -Name Hushward
 ## Coding Rules
 
 - Add or update tests for every behavior change.
-- Keep UI minimal: status, ON/OFF, start time, idle threshold, context checks, countdown cancel.
+- Keep UI calm and tray-first. Every surface must improve safety, trust, or recovery.
 - Keep UI language Spanish unless user explicitly asks otherwise.
 - Avoid background loops. Prefer scheduled one-shot delays and cancellation.
-- Preserve the installer wake task `Hushward-NightWake` at `00:30` with `WakeToRun`, `--scheduled-check`, 5 minute repetition, and 6 hour duration; Run key alone cannot wake a suspended PC.
+- Wake tasks follow enabled routines, use `WakeToRun` and `--scheduled-check`, and remain disabled by default; Run key alone cannot wake a suspended PC.
 - `--scheduled-check` must signal the existing primary instance to restart monitoring/evaluate now, but must not open the window.
 - Keep Windows awake during the warning countdown; otherwise it may sleep again before `shutdown.exe`.
 - Keep tray behavior predictable: close hides, Exit exits, second launch opens existing instance.
@@ -58,4 +58,3 @@ Get-Process -Name Hushward
 - Read `docs/UX_GUIDE.md` before UI changes.
 - Preserve tray-first behavior.
 - Add hints only when they prevent user confusion or unsafe operation.
-
