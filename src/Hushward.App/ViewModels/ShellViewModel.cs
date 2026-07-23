@@ -50,6 +50,11 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
 
     public string StatusText => Snapshot.MonitoringState switch
     {
+        RuntimeState.Disabled when Snapshot.LastMeaningfulEvent?.Code == "status.paused-until" =>
+            string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                UiText.StatusPausedUntilFormat,
+                Snapshot.NextEvaluationAt),
         RuntimeState.Disabled when IsTemporarilyDisabled => UiText.StatusPausedTomorrow,
         RuntimeState.Disabled => UiText.StatusDisabled,
         RuntimeState.WaitingForWindow => UiText.StatusWaitingForWindow,
@@ -61,7 +66,12 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
     };
 
     public string TrayStatusText => IsTemporarilyDisabled
-        ? UiText.TrayStatusPausedTomorrow
+        ? Snapshot.LastMeaningfulEvent?.Code == "status.paused-until"
+            ? string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                UiText.TrayStatusPausedUntilFormat,
+                Snapshot.NextEvaluationAt)
+            : UiText.TrayStatusPausedTomorrow
         : IsEnabled
             ? string.Format(System.Globalization.CultureInfo.CurrentCulture, UiText.TrayStatusActiveFormat, StatusText)
             : UiText.TrayStatusDisabled;
@@ -117,13 +127,15 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
     }
 
     public bool IsTemporarilyDisabled =>
-        Snapshot.LastMeaningfulEvent?.Code == "status.paused-today";
+        Snapshot.LastMeaningfulEvent?.Code is "status.paused-today" or "status.paused-until";
     public ICommand CancelShutdownCommand => _monitor.CancelShutdownCommand;
     public ICommand DisableUntilTomorrowCommand => _monitor.DisableUntilTomorrowCommand;
 
     public void CancelCountdownFromInput() => _monitor.CancelCountdownFromInput();
 
     public void DisableUntilTomorrow() => _monitor.DisableUntilTomorrow();
+
+    public void Postpone(int minutes) => _monitor.DisableFor(TimeSpan.FromMinutes(minutes));
 
     public void ReactivateToday() => _monitor.ReactivateToday();
 
@@ -212,6 +224,10 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
             tonightOverride.RequireManualConfirmation)
         {
             _monitor.DisableUntilTomorrow();
+        }
+        else if (tonightOverride.PostponedUntil is { } postponedUntil)
+        {
+            _monitor.DisableFor(postponedUntil - DateTimeOffset.Now);
         }
     }
 }

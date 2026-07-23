@@ -2,6 +2,10 @@ using System.ComponentModel;
 using System.Media;
 using System.Windows;
 using Hushward.App.ViewModels;
+using Hushward.App.ViewModels.Tray;
+using Hushward.App.ViewModels.Warnings;
+using Hushward.App.Tray;
+using Hushward.App.Warnings;
 using Hushward.Core.Routines;
 
 namespace Hushward.App.Views;
@@ -10,12 +14,16 @@ public partial class ShellWindow : Window
 {
     private readonly ShellViewModel _viewModel;
     private readonly Func<IDisposable> _sleepBlockerFactory;
-    private readonly TrayIconService _trayIcon;
+    private readonly TrayIconHost _trayIcon;
+    private readonly WarningViewModel _warningViewModel;
+    private readonly WarningWindow _warningWindow;
     private IDisposable? _sleepBlocker;
     private bool _exitRequested;
 
     public ShellWindow(
         ShellViewModel viewModel,
+        TrayFlyoutViewModel trayViewModel,
+        WarningViewModel warningViewModel,
         Func<IDisposable> sleepBlockerFactory)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
@@ -24,9 +32,11 @@ public partial class ShellWindow : Window
         InitializeComponent();
         _viewModel = viewModel;
         _sleepBlockerFactory = sleepBlockerFactory;
+        _warningViewModel = warningViewModel;
+        _warningWindow = new WarningWindow(warningViewModel);
         DataContext = viewModel;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
-        _trayIcon = new TrayIconService(_viewModel, ShowMainWindow, ExitApplication);
+        _trayIcon = new TrayIconHost(trayViewModel);
     }
 
     public void ShowFromUserRequest() => ShowMainWindow();
@@ -36,6 +46,8 @@ public partial class ShellWindow : Window
     public void AllowExit() => _exitRequested = true;
 
     public Task ApplyRoutineAsync(NightRoutine routine) => _viewModel.ApplyRoutineAsync(routine);
+
+    public Task ShowWarningPreviewAsync() => _warningViewModel.StartPreviewAsync();
 
     protected override void OnPreviewMouseMove(System.Windows.Input.MouseEventArgs e)
     {
@@ -66,6 +78,8 @@ public partial class ShellWindow : Window
     {
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         StopPreventingSleep();
+        _warningWindow.Close();
+        _warningViewModel.Dispose();
         _trayIcon.Dispose();
         _viewModel.Dispose();
         base.OnClosed(e);
@@ -86,12 +100,13 @@ public partial class ShellWindow : Window
         else
         {
             StopPreventingSleep();
+            _warningWindow.HideWarning();
         }
     }
 
     private void ShowWarningNotification()
     {
-        ShowMainWindow();
+        _warningWindow.ShowWarning();
         SystemSounds.Exclamation.Play();
     }
 

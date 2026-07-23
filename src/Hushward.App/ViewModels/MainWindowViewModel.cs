@@ -267,10 +267,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         RefreshTemporaryDisableStatus();
 
         var now = CurrentTime;
+        ApplyTemporaryDisable(
+            new DateTimeOffset(now.Date.AddDays(1), now.Offset),
+            UiText.StatusPausedTomorrow);
+    }
+
+    public void DisableFor(TimeSpan duration)
+    {
+        RefreshTemporaryDisableStatus();
+        var until = CurrentTime.Add(duration < TimeSpan.FromMinutes(1) ? TimeSpan.FromMinutes(1) : duration);
+        ApplyTemporaryDisable(
+            until,
+            Format(UiText.StatusPausedUntilFormat, until));
+    }
+
+    private void ApplyTemporaryDisable(DateTimeOffset until, string status)
+    {
         _resumeAfterTemporaryDisable = IsEnabled;
-        TemporarilyDisabledUntil = new DateTimeOffset(now.Date.AddDays(1), now.Offset);
+        TemporarilyDisabledUntil = until;
         IsEnabled = false;
-        StatusText = UiText.StatusPausedTomorrow;
+        StatusText = status;
 
         if (_idleDetector is not null || _contextDetector is not null || _shutdownExecutor is not null)
         {
@@ -706,8 +722,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
         var latest = _runtimeSnapshots.Latest;
         var state = ResolveRuntimeState();
+        var now = CurrentTime;
         var code = IsTemporarilyDisabled
-            ? "status.paused-today"
+            ? TemporarilyDisabledUntil >= new DateTimeOffset(now.Date.AddDays(1), now.Offset)
+                ? "status.paused-today"
+                : "status.paused-until"
             : state switch
             {
                 RuntimeState.Disabled => "status.disabled",
@@ -718,12 +737,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 RuntimeState.SafeMode => "status.safe-mode",
                 _ => "status.monitoring"
             };
-        var now = CurrentTime;
         _runtimeSnapshots.Publish(latest with
         {
             Sequence = latest.Sequence + 1,
             CapturedAt = now,
             MonitoringState = state,
+            NextEvaluationAt = IsTemporarilyDisabled ? TemporarilyDisabledUntil : latest.NextEvaluationAt,
             LastMeaningfulEvent = new RuntimeEvent(code, now, latest.PrimaryReason)
         });
     }

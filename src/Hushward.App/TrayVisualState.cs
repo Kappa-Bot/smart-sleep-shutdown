@@ -3,7 +3,11 @@ namespace Hushward.App;
 public enum TrayVisualState
 {
     Off,
-    Active,
+    Ready,
+    Active = Ready,
+    Waiting,
+    Protected,
+    Warning,
+    Degraded,
     SuspendedToday
 }
-

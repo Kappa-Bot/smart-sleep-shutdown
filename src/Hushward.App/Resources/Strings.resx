@@ -245,4 +245,21 @@
   <data name="DiagnosticsBody" xml:space="preserve"><value>Estado técnico disponible solo cuando lo necesitas.</value></data>
   <data name="RecoveryTitle" xml:space="preserve"><value>Recuperación</value></data>
   <data name="RecoveryBody" xml:space="preserve"><value>Las acciones automáticas permanecen bloqueadas hasta recuperar una configuración válida.</value></data>
+  <data name="TrayStateOff" xml:space="preserve"><value>Desactivado</value></data>
+  <data name="TrayStateReady" xml:space="preserve"><value>Vigilando</value></data>
+  <data name="TrayStateWaiting" xml:space="preserve"><value>Esperando</value></data>
+  <data name="TrayStateProtected" xml:space="preserve"><value>Protegido</value></data>
+  <data name="TrayStateWarning" xml:space="preserve"><value>Aviso activo</value></data>
+  <data name="TrayStateDegraded" xml:space="preserve"><value>Revisión necesaria</value></data>
+  <data name="TrayProtectionCountLabel" xml:space="preserve"><value>Protecciones</value></data>
+  <data name="TrayOpenTonight" xml:space="preserve"><value>Ver esta noche</value></data>
+  <data name="WarningTitle" xml:space="preserve"><value>Hushward va a apagar el equipo</value></data>
+  <data name="WarningCancelHint" xml:space="preserve"><value>Mueve el ratón, pulsa una tecla o elige Cancelar.</value></data>
+  <data name="WarningPostpone15" xml:space="preserve"><value>15 min</value></data>
+  <data name="WarningPostpone30" xml:space="preserve"><value>30 min</value></data>
+  <data name="WarningPostpone60" xml:space="preserve"><value>60 min</value></data>
+  <data name="WarningKeepActiveTomorrow" xml:space="preserve"><value>Mantener activo hasta mañana</value></data>
+  <data name="WarningSecondsFormat" xml:space="preserve"><value>{0} segundos</value></data>
+  <data name="StatusPausedUntilFormat" xml:space="preserve"><value>Pausado hasta las {0:HH:mm}</value></data>
+  <data name="TrayStatusPausedUntilFormat" xml:space="preserve"><value>Hushward · PAUSADO hasta {0:HH:mm}</value></data>
 </root>

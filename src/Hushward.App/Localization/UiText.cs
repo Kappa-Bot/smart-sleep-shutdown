@@ -125,6 +125,23 @@ public static class UiText
     public static string DiagnosticsBody => Get(nameof(DiagnosticsBody));
     public static string RecoveryTitle => Get(nameof(RecoveryTitle));
     public static string RecoveryBody => Get(nameof(RecoveryBody));
+    public static string TrayStateOff => Get(nameof(TrayStateOff));
+    public static string TrayStateReady => Get(nameof(TrayStateReady));
+    public static string TrayStateWaiting => Get(nameof(TrayStateWaiting));
+    public static string TrayStateProtected => Get(nameof(TrayStateProtected));
+    public static string TrayStateWarning => Get(nameof(TrayStateWarning));
+    public static string TrayStateDegraded => Get(nameof(TrayStateDegraded));
+    public static string TrayProtectionCountLabel => Get(nameof(TrayProtectionCountLabel));
+    public static string TrayOpenTonight => Get(nameof(TrayOpenTonight));
+    public static string WarningTitle => Get(nameof(WarningTitle));
+    public static string WarningCancelHint => Get(nameof(WarningCancelHint));
+    public static string WarningPostpone15 => Get(nameof(WarningPostpone15));
+    public static string WarningPostpone30 => Get(nameof(WarningPostpone30));
+    public static string WarningPostpone60 => Get(nameof(WarningPostpone60));
+    public static string WarningKeepActiveTomorrow => Get(nameof(WarningKeepActiveTomorrow));
+    public static string WarningSecondsFormat => Get(nameof(WarningSecondsFormat));
+    public static string StatusPausedUntilFormat => Get(nameof(StatusPausedUntilFormat));
+    public static string TrayStatusPausedUntilFormat => Get(nameof(TrayStatusPausedUntilFormat));
 
     public static string Get(string key) =>
         ResourceManager.GetString(key) ?? throw new MissingManifestResourceException(key);

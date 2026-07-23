@@ -5,6 +5,8 @@ using Hushward.App.ViewModels;
 using Hushward.App.Views;
 using Hushward.App.Views.Onboarding;
 using Hushward.App.ViewModels.Onboarding;
+using Hushward.App.ViewModels.Tray;
+using Hushward.App.ViewModels.Warnings;
 using Hushward.Application.Runtime;
 using Hushward.Infrastructure.Power;
 using Hushward.Infrastructure.System;
@@ -61,6 +63,13 @@ public partial class App : System.Windows.Application
             Shutdown();
         }));
         _singleInstance.StartScheduledCheckListener(() => Dispatcher.Invoke(mainWindow.RunScheduledCheck));
+
+#if DEBUG
+        if (e.Args.Contains("--warning-preview", StringComparer.OrdinalIgnoreCase))
+        {
+            _ = mainWindow.ShowWarningPreviewAsync();
+        }
+#endif
 
         if (StartupIntent.ShouldShowMainWindow(e.Args))
         {
@@ -122,6 +131,28 @@ public partial class App : System.Windows.Application
             viewModel,
             snapshots,
             action => Dispatcher.Invoke(action));
-        return new ShellWindow(shellViewModel, WindowsSystemSleepBlocker.Start);
+        ShellWindow? shellWindow = null;
+        var trayViewModel = new TrayFlyoutViewModel(
+            snapshots,
+            shellViewModel.DisableUntilTomorrow,
+            () => shellWindow?.ShowFromUserRequest(),
+            () =>
+            {
+                shellWindow?.AllowExit();
+                Shutdown();
+            },
+            action => Dispatcher.Invoke(action));
+        var warningViewModel = new WarningViewModel(
+            snapshots,
+            shutdownExecutor,
+            shellViewModel.Postpone,
+            shellViewModel.DisableUntilTomorrow,
+            action => Dispatcher.Invoke(action));
+        shellWindow = new ShellWindow(
+            shellViewModel,
+            trayViewModel,
+            warningViewModel,
+            WindowsSystemSleepBlocker.Start);
+        return shellWindow;
     }
 }

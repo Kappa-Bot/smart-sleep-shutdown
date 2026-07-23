@@ -23,8 +23,12 @@ public static class TrayIconFactory
 
         var indicatorColor = state switch
         {
-            TrayVisualState.Active => Drawing.Color.FromArgb(22, 163, 74),
-            TrayVisualState.SuspendedToday => Drawing.Color.FromArgb(245, 158, 11),
+            TrayVisualState.Ready => Drawing.Color.FromArgb(102, 199, 165),
+            TrayVisualState.Waiting => Drawing.Color.FromArgb(152, 163, 184),
+            TrayVisualState.Protected => Drawing.Color.FromArgb(242, 184, 75),
+            TrayVisualState.Warning => Drawing.Color.FromArgb(242, 158, 76),
+            TrayVisualState.Degraded => Drawing.Color.FromArgb(229, 107, 111),
+            TrayVisualState.SuspendedToday => Drawing.Color.FromArgb(242, 184, 75),
             _ => Drawing.Color.FromArgb(100, 116, 139)
         };
 
@@ -55,4 +59,3 @@ public static class TrayIconFactory
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(IntPtr iconHandle);
 }
-

@@ -23,7 +23,8 @@ public sealed class ProjectReferenceTests
     {
         var projectFiles = Directory.GetFiles(RepositoryRoot(), "*.csproj", SearchOption.AllDirectories)
             .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") &&
-                !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+                !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") &&
+                !path.EndsWith("_wpftmp.csproj", StringComparison.OrdinalIgnoreCase))
             .ToArray();
 
         foreach (var projectFile in projectFiles)
