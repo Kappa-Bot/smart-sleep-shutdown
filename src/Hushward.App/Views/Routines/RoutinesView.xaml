@@ -1,0 +1,29 @@
+<UserControl x:Class="Hushward.App.Views.Routines.RoutinesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:Hushward.App.Localization">
+    <StackPanel>
+        <ItemsControl ItemsSource="{Binding Routines}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="0,0,0,8"
+                            Style="{StaticResource SurfaceCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Name}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Text="{Binding Window}"
+                                       Foreground="{StaticResource QuietGrayBrush}" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button HorizontalAlignment="Left"
+                Command="{Binding ValidateCommand}"
+                Content="{x:Static loc:UiText.RoutineValidate}" />
+        <TextBlock Margin="0,8,0,0"
+                   Text="{Binding ValidationText}"
+                   TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

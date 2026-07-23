@@ -3,6 +3,8 @@ using Hushward.App.Settings;
 using Hushward.App.Runtime;
 using Hushward.App.ViewModels;
 using Hushward.App.Views;
+using Hushward.App.Views.Onboarding;
+using Hushward.App.ViewModels.Onboarding;
 using Hushward.Application.Runtime;
 using Hushward.Infrastructure.Power;
 using Hushward.Infrastructure.System;
@@ -12,6 +14,7 @@ namespace Hushward.App;
 public partial class App : System.Windows.Application
 {
     private SingleInstanceCoordinator? _singleInstance;
+    private bool _needsOnboarding;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -61,6 +64,14 @@ public partial class App : System.Windows.Application
 
         if (StartupIntent.ShouldShowMainWindow(e.Args))
         {
+            if (_needsOnboarding)
+            {
+                var onboarding = new OnboardingViewModel(routine =>
+                    routine.Enabled ? mainWindow.ApplyRoutineAsync(routine) : Task.CompletedTask);
+                new OnboardingWindow(onboarding).ShowDialog();
+                _needsOnboarding = !onboarding.IsComplete;
+            }
+
             mainWindow.Show();
         }
     }
@@ -88,6 +99,8 @@ public partial class App : System.Windows.Application
         var contextDetector = AggregateContextDetector.CreateDefault();
         var snapshots = new RuntimeSnapshotPublisher(NightRuntimeSnapshot.Empty(0, clock.Now));
         MainWindowViewModel? viewModel = null;
+        var settingsStore = JsonUserSettingsStore.CreateDefault();
+        _needsOnboarding = settingsStore.Load() is null;
         var shutdownExecutor = new CoordinatedShutdownExecutor(
             idleDetector,
             contextDetector,
@@ -101,7 +114,7 @@ public partial class App : System.Windows.Application
             shutdownExecutor,
             clock,
             action => Dispatcher.Invoke(action),
-            JsonUserSettingsStore.CreateDefault(),
+            settingsStore,
             shutdownExecutor,
             snapshots);
 

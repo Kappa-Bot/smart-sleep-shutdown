@@ -1,0 +1,15 @@
+<UserControl x:Class="Hushward.App.Views.Protections.ProtectionsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:Hushward.App.Localization">
+    <StackPanel>
+        <TextBlock Text="{Binding Summary}"
+                   FontSize="16"
+                   FontWeight="SemiBold"
+                   TextWrapping="Wrap" />
+        <TextBlock Margin="0,12,0,0"
+                   Text="{x:Static loc:UiText.ProtectionPrivacyBody}"
+                   Foreground="{StaticResource QuietGrayBrush}"
+                   TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

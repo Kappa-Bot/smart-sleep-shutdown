@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Media;
 using System.Windows;
 using Hushward.App.ViewModels;
+using Hushward.Core.Routines;
 
 namespace Hushward.App.Views;
 
@@ -33,6 +34,8 @@ public partial class ShellWindow : Window
     public void RunScheduledCheck() => _viewModel.RunScheduledCheck();
 
     public void AllowExit() => _exitRequested = true;
+
+    public Task ApplyRoutineAsync(NightRoutine routine) => _viewModel.ApplyRoutineAsync(routine);
 
     protected override void OnPreviewMouseMove(System.Windows.Input.MouseEventArgs e)
     {

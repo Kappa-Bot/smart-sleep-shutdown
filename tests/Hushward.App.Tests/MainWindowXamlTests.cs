@@ -26,7 +26,7 @@ public sealed class MainWindowXamlTests
         var xaml = ReadShell();
 
         Assert.Contains("loc:UiText.NoSilentShutdownHint", xaml);
-        Assert.Contains("loc:UiText.ProtectionsHint", xaml);
+        Assert.Contains("protections:ProtectionsView", xaml);
     }
 
     [Fact]
@@ -43,7 +43,10 @@ public sealed class MainWindowXamlTests
     {
         var xaml = ReadShell();
 
-        Assert.Contains("ScheduleSummaryText", xaml);
+        Assert.Contains("DataContext=\"{Binding Home}\"", xaml);
+        Assert.Contains("DataContext=\"{Binding Tonight}\"", xaml);
+        Assert.Contains("DataContext=\"{Binding Routines}\"", xaml);
+        Assert.Contains("DataContext=\"{Binding Protections}\"", xaml);
     }
 
     [Fact]
@@ -58,12 +61,16 @@ public sealed class MainWindowXamlTests
     [Fact]
     public void SettingsTextBoxesCommitOnLostFocusToAvoidRestartingMonitorPerKeystroke()
     {
-        var xaml = ReadShell();
+        var xaml = File.ReadAllText(FindProjectFile(
+            "src",
+            "Hushward.App",
+            "Views",
+            "Onboarding",
+            "OnboardingWindow.xaml"));
 
-        Assert.Contains("StartTimeText, UpdateSourceTrigger=LostFocus", xaml);
-        Assert.Contains("IdleThresholdMinutes, UpdateSourceTrigger=LostFocus", xaml);
-        Assert.DoesNotContain("StartTimeText, UpdateSourceTrigger=PropertyChanged", xaml);
-        Assert.DoesNotContain("IdleThresholdMinutes, UpdateSourceTrigger=PropertyChanged", xaml);
+        Assert.Contains("Text=\"{Binding Earliest}\"", xaml);
+        Assert.Contains("Text=\"{Binding IdleMinutes}\"", xaml);
+        Assert.DoesNotContain("UpdateSourceTrigger=PropertyChanged", xaml);
     }
 
     [Fact]
@@ -95,7 +102,7 @@ public sealed class MainWindowXamlTests
         Assert.Contains("HushwardToggleStyle", xaml);
         Assert.Contains("SurfaceCardStyle", xaml);
         Assert.Contains("StatusBadgeText", xaml);
-        Assert.Contains("loc:UiText.ProtectionsHint", xaml);
+        Assert.Contains("protections:ProtectionsView", xaml);
     }
 
     private static string ReadShell() =>

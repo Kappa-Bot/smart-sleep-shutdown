@@ -3,6 +3,12 @@ using System.Windows.Input;
 using Hushward.Application.Runtime;
 using Hushward.App.Localization;
 using Hushward.App.Presentation;
+using Hushward.App.ViewModels.Home;
+using Hushward.App.ViewModels.Protections;
+using Hushward.App.ViewModels.Routines;
+using Hushward.App.ViewModels.Tonight;
+using Hushward.Core.Actions;
+using Hushward.Core.Routines;
 using Hushward.Core.Warnings;
 
 namespace Hushward.App.ViewModels;
@@ -22,6 +28,11 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
         _monitor = monitor;
         _marshalToUi = marshalToUi;
         _snapshot = snapshots.Latest;
+        var routine = CreateRoutineFromMonitor();
+        Home = new HomeViewModel(_snapshot);
+        Tonight = new TonightViewModel(routine, DateTimeOffset.Now, ApplyTonightOverride);
+        Routines = new RoutinesViewModel([routine], TimeZoneInfo.Local);
+        Protections = new ProtectionsViewModel(_snapshot);
         _monitor.PropertyChanged += OnMonitorPropertyChanged;
         _snapshotSubscription = snapshots.Subscribe(this);
     }
@@ -31,6 +42,11 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
         get => _snapshot;
         private set => SetProperty(ref _snapshot, value);
     }
+
+    public HomeViewModel Home { get; }
+    public TonightViewModel Tonight { get; }
+    public RoutinesViewModel Routines { get; }
+    public ProtectionsViewModel Protections { get; }
 
     public string StatusText => Snapshot.MonitoringState switch
     {
@@ -119,6 +135,8 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
         _marshalToUi(() =>
         {
             Snapshot = value;
+            Home.Update(value);
+            Protections.Update(value);
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(TrayStatusText));
             OnPropertyChanged(nameof(HeaderStatusBrush));
@@ -156,5 +174,44 @@ public sealed class ShellViewModel : ObservableObject, IObserver<NightRuntimeSna
         }
 
         _marshalToUi(() => OnPropertyChanged(e.PropertyName));
+    }
+
+    public Task ApplyRoutineAsync(NightRoutine routine)
+    {
+        if (routine.PrimaryAction != NightAction.ShutDown)
+        {
+            throw new InvalidOperationException("Only shutdown is currently authorized by this runtime.");
+        }
+
+        _monitor.IsEnabled = false;
+        _monitor.StartTimeText = routine.Window.Earliest.ToString("HH:mm");
+        _monitor.IdleThresholdMinutes = (int)routine.MinimumIdle.TotalMinutes;
+        _monitor.ContextChecksEnabled = true;
+        _monitor.IsEnabled = routine.Enabled;
+        return Task.CompletedTask;
+    }
+
+    private NightRoutine CreateRoutineFromMonitor() => new(
+        Guid.NewGuid(),
+        UiText.DefaultRoutineName,
+        _monitor.IsEnabled,
+        Enum.GetValues<DayOfWeek>(),
+        new NightWindow(
+            TimeOnly.TryParse(_monitor.StartTimeText, out var earliest) ? earliest : new TimeOnly(1, 0),
+            new TimeOnly(6, 0)),
+        TimeSpan.FromMinutes(_monitor.IdleThresholdMinutes),
+        NightAction.ShutDown,
+        TimeSpan.FromSeconds(60),
+        WakePolicy.NeverWake,
+        LatestDecisionPolicy.KeepWaitingForProtections,
+        []);
+
+    private void ApplyTonightOverride(TonightOverride tonightOverride)
+    {
+        if (tonightOverride.PauseUntilTomorrow ||
+            tonightOverride.RequireManualConfirmation)
+        {
+            _monitor.DisableUntilTomorrow();
+        }
     }
 }
