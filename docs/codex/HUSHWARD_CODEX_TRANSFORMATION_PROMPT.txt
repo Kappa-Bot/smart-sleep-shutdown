@@ -1,0 +1,65 @@
+/caveman Ultra
+/superpowers
+
+Contexto ya cargado. Ejecuta la transformación completa de `Kappa-Bot/smart-sleep-shutdown` a **Hushward**. No reabras brainstorming ni rediseñes el producto.
+
+BASE
+- Parte de `docs/hushward-product-design` en `67c15bf83179583b282b322158cd90ba733a854f` o de un descendiente que contenga estos documentos.
+- Crea un worktree aislado y rama `feat/hushward-product-transformation`.
+- Lee, en este orden:
+  1. `AGENTS.md`
+  2. `docs/superpowers/specs/2026-07-23-hushward-product-transformation-design.md`
+  3. `docs/superpowers/plans/2026-07-23-hushward-product-transformation.md`
+  4. `docs/superpowers/plans/2026-07-23-hushward-plan-review-fixes.md`
+- El diseño es vinculante. El addendum prevalece ante cualquier conflicto con el plan.
+
+EJECUCIÓN
+- Usa `superpowers:using-git-worktrees`, `superpowers:subagent-driven-development`, TDD, revisión entre tareas y `verification-before-completion`.
+- Ejecuta las 18 tareas del plan en orden y las 5 fases completas. No te detengas tras analizar, planificar, crear scaffolding o producir mockups.
+- Máximo 6 subagentes, según el mapa del plan. Cada subagente debe usar `/caveman Ultra` y recibir solo su contrato, dependencias y archivos relevantes.
+- Mantén commits pequeños, enfocados y revisables; uno por tarea como mínimo. No mezcles fases sin pasar sus gates.
+- Reutiliza y caracteriza la lógica segura existente antes de sustituirla. Evolución, no reescritura ciega.
+- Implementa producto real: sin stubs productivos, datos demo, `TODO`, fallbacks ficticios ni simulaciones en rutas de producción. El simulador de política aprobado debe usar el mismo Core y nunca ejecutar acciones reales.
+- Si una interfaz del plan no encaja exactamente con el código actual, conserva su semántica, adapta el detalle mínimo y documenta la desviación en el commit. No amplíes alcance.
+
+INVARIANTES ABSOLUTAS
+- Nunca acción automática silenciosa.
+- Nunca `/f` ni cierre forzado.
+- Teclado/ratón, protección nueva o transición relevante cancelan la advertencia y exigen nueva inactividad.
+- Re-evaluación fresca inmediatamente antes de actuar.
+- Fallo, timeout, evidencia requerida desconocida o snapshot obsoleto bloquean acciones automáticas de estado.
+- Ninguna alternativa implícita; solo las expresamente autorizadas.
+- Ningún test automatizado puede apagar, hibernar, suspender o bloquear la sesión real.
+- Wake por rutina y desactivado por defecto; tarea sincronizada con la configuración, nunca hora fija desconectada.
+- Local-first: sin cuenta, nube, telemetría, backend, control remoto, listener, servicio permanente, scripts/comandos arbitrarios, IA generativa ni inspección de contenido.
+- Español completo y resource-backed; accesibilidad, DPI, varios monitores y reduced motion son release gates.
+
+GATES
+Tras cada tarea:
+1. test específico rojo;
+2. implementación mínima completa;
+3. test verde;
+4. tests de proyectos afectados;
+5. formato/build sin nueva deuda;
+6. revisión independiente;
+7. commit.
+
+Tras cada fase: integra, ejecuta `dotnet format`, `dotnet build`, `dotnet test` y los scripts disponibles; corrige antes de continuar.
+
+FINAL
+- Ejecuta `scripts/Verify-Release.ps1`, lifecycle de instalación y CI Windows.
+- Completa toda validación automatizable. No declares QA de hardware real que no hayas ejecutado; deja únicamente ese gate documentado como pendiente si el entorno no lo permite.
+- Actualiza README, arquitectura, privacidad, troubleshooting, migración, recuperación, AGENTS y release checklist conforme al resultado real.
+- Deja worktree limpio y rama lista para PR/merge.
+
+SALIDA ULTRACOMPACTA
+Durante ejecución: solo `Tarea N OK`, `Error: <causa>; corrigiendo`, `Gate fase N OK`.
+Al final informa únicamente:
+- rango de commits;
+- cambios entregados por fase;
+- comandos/gates y resultado;
+- instaladores/artefactos generados;
+- limitaciones reales pendientes, solo si existen;
+- ruta de PR o siguiente comando de integración.
+
+No pidas decisiones ya resueltas. Solo detente ante un bloqueo externo irreversible: credencial/certificado ausente, permiso denegado o imposibilidad real del entorno.
