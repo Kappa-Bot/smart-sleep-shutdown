@@ -1,10 +1,10 @@
 # Architecture
 
-Smart Sleep Shutdown is a small WPF utility with strict separation between policy, Windows adapters, and UI orchestration.
+Hushward is a small WPF utility with strict separation between policy, Windows adapters, and UI orchestration.
 
 ## Core
 
-`src/SmartSleepShutdown.Core` owns safe shutdown policy:
+`src/Hushward.Core` owns safe shutdown policy:
 
 - `SleepShutdownSettings`: enabled state, start time, idle threshold, warning duration, context checks.
 - `IdleSnapshot`: current idle duration and input-reset signal.
@@ -16,7 +16,7 @@ Core must stay deterministic and testable.
 
 ## Infrastructure
 
-`src/SmartSleepShutdown.Infrastructure` owns side effects:
+`src/Hushward.Infrastructure` owns side effects:
 
 - `Win32IdleDetector`: `GetLastInputInfo`.
 - `ForegroundFullscreenContextProbe`: fullscreen foreground window detection.
@@ -30,7 +30,7 @@ Infrastructure should fail safe. Unexpected detector failures become blockers.
 
 ## App
 
-`src/SmartSleepShutdown.App` owns:
+`src/Hushward.App` owns:
 
 - WPF window and tray menu.
 - Single-instance coordination.
@@ -49,3 +49,4 @@ The app starts hidden with `--startup`, opens the existing instance on second la
 5. Any input or blocker cancels.
 6. At countdown expiry, it re-checks eligibility.
 7. Only then it runs shutdown.
+

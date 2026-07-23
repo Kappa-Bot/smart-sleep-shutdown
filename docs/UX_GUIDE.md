@@ -1,6 +1,6 @@
 # UX Guide
 
-Smart Sleep Shutdown is a tray-first Windows utility. UX goal: user trusts it, understands it, then forgets it.
+Hushward is a tray-first Windows utility. UX goal: user trusts it, understands it, then forgets it.
 
 ## Language
 
@@ -50,3 +50,4 @@ Hints should be temporary or compact. Use them only for safety-critical or disco
 - Muted blue-gray shell, white work surfaces, green active state, amber warning state.
 - Cards only for actual grouped controls or status.
 - No decorative blobs, charts, or marketing layout.
+

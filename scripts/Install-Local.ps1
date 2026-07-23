@@ -1,16 +1,16 @@
 param(
     [string] $Configuration = "Release",
-    [string] $InstallRoot = "$env:LOCALAPPDATA\SmartSleepShutdown"
+    [string] $InstallRoot = "$env:LOCALAPPDATA\Hushward"
 )
 
 $ErrorActionPreference = "Stop"
 
 $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$projectPath = Join-Path $projectRoot "src\SmartSleepShutdown.App\SmartSleepShutdown.App.csproj"
-$exePath = Join-Path $InstallRoot "SmartSleepShutdown.exe"
-$wakeTaskName = "SmartSleepShutdown-NightWake"
+$projectPath = Join-Path $projectRoot "src\Hushward.App\Hushward.App.csproj"
+$exePath = Join-Path $InstallRoot "Hushward.App.exe"
+$wakeTaskName = "Hushward-NightWake"
 
-$runningProcesses = Get-Process -Name "SmartSleepShutdown" -ErrorAction SilentlyContinue |
+$runningProcesses = Get-Process -Name "Hushward.App" -ErrorAction SilentlyContinue |
     Where-Object { $_.Path -eq $exePath }
 
 if ($runningProcesses) {
@@ -47,7 +47,7 @@ $runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 New-Item -Path $runKey -Force | Out-Null
 New-ItemProperty `
     -Path $runKey `
-    -Name "SmartSleepShutdown" `
+    -Name "Hushward" `
     -Value "`"$exePath`" --startup" `
     -PropertyType String `
     -Force | Out-Null
@@ -82,7 +82,7 @@ $wakeTask = New-ScheduledTask `
     -Trigger $taskTrigger `
     -Settings $taskSettings `
     -Principal $taskPrincipal `
-    -Description "Wake and start Smart Sleep Shutdown before the nightly shutdown window."
+    -Description "Wake and start Hushward before the nightly shutdown window."
 
 Register-ScheduledTask `
     -TaskName $wakeTaskName `
@@ -99,6 +99,7 @@ catch {
     Write-Warning "Could not enable wake timers automatically. Enable 'Allow wake timers' in Windows Power Options."
 }
 
-Write-Host "Installed Smart Sleep Shutdown to $InstallRoot"
+Write-Host "Installed Hushward to $InstallRoot"
 Write-Host "Startup registration: $exePath --startup"
 Write-Host "Wake scheduled task: $wakeTaskName at 00:30"
+

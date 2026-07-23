@@ -30,7 +30,7 @@ The app should feel like a native Windows tray utility:
 - Closing the window hides it to tray; tray Exit closes the process.
 - During the 60 second warning, keyboard/mouse input cancels immediately. Context blockers are enforced at the final re-check so transient audio/CPU/fullscreen noise cannot restart warning loops forever.
 - `DetectorFailure` is a hard blocker. Fullscreen app, known process, audio, and high CPU are soft blockers; this allows shutdown after the user falls asleep on a game home screen.
-- Local install registers `SmartSleepShutdown-NightWake` in Task Scheduler at `00:30` with `WakeToRun`, 5 minute repetition, 6 hour duration, and `--scheduled-check`, plus the existing Run key.
+- Local install registers `Hushward-NightWake` in Task Scheduler at `00:30` with `WakeToRun`, 5 minute repetition, 6 hour duration, and `--scheduled-check`, plus the existing Run key.
 - `--scheduled-check` is a background launch. If another instance is primary, it signals an immediate scheduled check instead of opening the window. This fixes stale `Task.Delay` after sleep.
 - The app holds `ES_SYSTEM_REQUIRED | ES_CONTINUOUS` during the 60 second warning countdown so Windows does not sleep again before the final check.
 - UI language is Spanish; keep new UX strings Spanish.
@@ -52,3 +52,4 @@ The app should feel like a native Windows tray utility:
 - Logs UI.
 - Forced shutdown.
 - Background services.
+

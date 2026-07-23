@@ -11,3 +11,5 @@ TestResults/
 *.nupkg
 publish/
 artifacts/
+
+.superpowers/

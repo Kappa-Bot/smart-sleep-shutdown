@@ -16,9 +16,9 @@ This repository is optimized for future AI agents. Keep the app focused: one Win
 
 ## Architecture
 
-- `SmartSleepShutdown.Core`: pure models and logic. No WPF, WinAPI, registry, process APIs, or file I/O.
-- `SmartSleepShutdown.Infrastructure`: Windows adapters: WinAPI idle, context probes, startup registration, shutdown command.
-- `SmartSleepShutdown.App`: WPF shell, tray icon, settings persistence, orchestration.
+- `Hushward.Core`: pure models and logic. No WPF, WinAPI, registry, process APIs, or file I/O.
+- `Hushward.Infrastructure`: Windows adapters: WinAPI idle, context probes, startup registration, shutdown command.
+- `Hushward.App`: WPF shell, tray icon, settings persistence, orchestration.
 - `tests`: xUnit tests split by project.
 
 ## Verification
@@ -26,19 +26,19 @@ This repository is optimized for future AI agents. Keep the app focused: one Win
 Run before claiming completion:
 
 ```powershell
-dotnet format .\SmartSleepShutdown.sln --verify-no-changes
-dotnet build .\SmartSleepShutdown.sln
-dotnet test .\SmartSleepShutdown.sln
+dotnet format .\Hushward.sln --verify-no-changes
+dotnet build .\Hushward.sln
+dotnet test .\Hushward.sln
 .\scripts\Install-Local.ps1
 ```
 
 Manual startup check:
 
 ```powershell
-$exe = Join-Path $env:LOCALAPPDATA 'SmartSleepShutdown\SmartSleepShutdown.exe'
+$exe = Join-Path $env:LOCALAPPDATA 'Hushward\Hushward.exe'
 Start-Process -FilePath $exe -ArgumentList '--startup'
 Start-Sleep -Seconds 5
-Get-Process -Name SmartSleepShutdown
+Get-Process -Name Hushward
 ```
 
 ## Coding Rules
@@ -47,7 +47,7 @@ Get-Process -Name SmartSleepShutdown
 - Keep UI minimal: status, ON/OFF, start time, idle threshold, context checks, countdown cancel.
 - Keep UI language Spanish unless user explicitly asks otherwise.
 - Avoid background loops. Prefer scheduled one-shot delays and cancellation.
-- Preserve the installer wake task `SmartSleepShutdown-NightWake` at `00:30` with `WakeToRun`, `--scheduled-check`, 5 minute repetition, and 6 hour duration; Run key alone cannot wake a suspended PC.
+- Preserve the installer wake task `Hushward-NightWake` at `00:30` with `WakeToRun`, `--scheduled-check`, 5 minute repetition, and 6 hour duration; Run key alone cannot wake a suspended PC.
 - `--scheduled-check` must signal the existing primary instance to restart monitoring/evaluate now, but must not open the window.
 - Keep Windows awake during the warning countdown; otherwise it may sleep again before `shutdown.exe`.
 - Keep tray behavior predictable: close hides, Exit exits, second launch opens existing instance.
@@ -58,3 +58,4 @@ Get-Process -Name SmartSleepShutdown
 - Read `docs/UX_GUIDE.md` before UI changes.
 - Preserve tray-first behavior.
 - Add hints only when they prevent user confusion or unsafe operation.
+

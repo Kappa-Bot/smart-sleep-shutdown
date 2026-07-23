@@ -1,4 +1,4 @@
-# Smart Sleep Shutdown
+# Hushward
 
 Windows WPF utility that shuts down the PC only when it is late enough, the user is idle, and no blocking activity is detected.
 
@@ -20,7 +20,7 @@ Left-click the tray icon to open the app.
 
 Right-click the tray icon to:
 
-- see whether Smart Sleep Shutdown is `ON`, `OFF`, or paused until tomorrow
+- see whether Hushward is `ON`, `OFF`, or paused until tomorrow
 - open the main window
 - activate or deactivate monitoring
 - pause monitoring until the next day
@@ -45,7 +45,7 @@ The app avoids constant polling.
 - from start time to `06:00`, it checks intelligently
 - while clearly active, it waits longer between checks
 - near the idle threshold or during countdown, it checks faster
-- the local installer registers `SmartSleepShutdown-NightWake` at `00:30` with `WakeToRun`
+- the local installer registers `Hushward-NightWake` at `00:30` with `WakeToRun`
 - the wake task repeats every 5 minutes for 6 hours and launches `--scheduled-check`, so a PC that sleeps again still wakes and re-checks during the shutdown window
 
 The start time can cross midnight. For example, `23:00` means active from `23:00` until `06:00`.
@@ -65,16 +65,16 @@ Soft blockers prevent shutdown during the first hour of idle. After one hour idl
 
 ```text
 smart-sleep-shutdown/
-  SmartSleepShutdown.sln
+  Hushward.sln
   README.md
   src/
-    SmartSleepShutdown.App/
-    SmartSleepShutdown.Core/
-    SmartSleepShutdown.Infrastructure/
+    Hushward.App/
+    Hushward.Core/
+    Hushward.Infrastructure/
   tests/
-    SmartSleepShutdown.App.Tests/
-    SmartSleepShutdown.Core.Tests/
-    SmartSleepShutdown.Infrastructure.Tests/
+    Hushward.App.Tests/
+    Hushward.Core.Tests/
+    Hushward.Infrastructure.Tests/
 ```
 
 ## Build
@@ -92,7 +92,7 @@ dotnet test
 ## Run
 
 ```powershell
-dotnet run --project src/SmartSleepShutdown.App
+dotnet run --project src/Hushward.App
 ```
 
 ## Local Install
@@ -101,11 +101,11 @@ dotnet run --project src/SmartSleepShutdown.App
 .\scripts\Install-Local.ps1
 ```
 
-This publishes to `%LOCALAPPDATA%\SmartSleepShutdown` and registers:
+This publishes to `%LOCALAPPDATA%\Hushward` and registers:
 
 ```text
-HKCU\Software\Microsoft\Windows\CurrentVersion\Run\SmartSleepShutdown
-Task Scheduler\SmartSleepShutdown-NightWake
+HKCU\Software\Microsoft\Windows\CurrentVersion\Run\Hushward
+Task Scheduler\Hushward-NightWake
 ```
 
 Startup launches hidden with `--startup`; control stays in the Windows tray.
@@ -122,3 +122,4 @@ Future maintainers and AI agents should read:
 - `docs/ARCHITECTURE.md`
 - `docs/AI_CONTEXT.md`
 - `docs/UX_GUIDE.md`
+
