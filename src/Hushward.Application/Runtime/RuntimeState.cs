@@ -22,10 +22,11 @@ public sealed record IdleRuntimeState(
     DateTimeOffset ObservedAt);
 
 public sealed record PowerRuntimeState(
-    bool IsOnBattery,
+    bool? IsOnBattery,
     int? BatteryPercent,
-    bool IsCharging,
-    IReadOnlySet<NightAction> SupportedActions)
+    bool? IsCharging,
+    IReadOnlySet<NightAction> SupportedActions,
+    DateTimeOffset? LastTransitionAt = null)
 {
     private IReadOnlySet<NightAction> _supportedActions = SupportedActions.ToFrozenSet();
 
@@ -39,7 +40,10 @@ public sealed record PowerRuntimeState(
 public sealed record SessionRuntimeState(
     bool IsLocked,
     bool IsRemote,
-    DateTimeOffset? LastTransitionAt);
+    DateTimeOffset? LastTransitionAt,
+    DateTimeOffset? LastLockTransitionAt = null,
+    DateTimeOffset? LastPowerTransitionAt = null,
+    DateTimeOffset? LastDisplayTopologyTransitionAt = null);
 
 public sealed record DetectorHealth(
     string DetectorId,

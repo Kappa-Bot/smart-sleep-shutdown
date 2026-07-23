@@ -7,9 +7,6 @@ public sealed record ShutdownCommand(
 {
     public static ShutdownCommand CreateShutdownNow()
     {
-        var windowsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-        var executable = Path.Combine(windowsDirectory, "System32", "shutdown.exe");
-        return new ShutdownCommand(executable, "/s /t 0", UseShellExecute: false);
+        return new ShutdownCommand("shutdown.exe", "/s /t 0", UseShellExecute: false);
     }
 }
-

@@ -9,9 +9,8 @@ public sealed class ShutdownCommandTests
     {
         var command = ShutdownCommand.CreateShutdownNow();
 
-        Assert.EndsWith(@"System32\shutdown.exe", command.FileName, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("shutdown.exe", command.FileName);
         Assert.Equal("/s /t 0", command.Arguments);
         Assert.False(command.UseShellExecute);
     }
 }
-

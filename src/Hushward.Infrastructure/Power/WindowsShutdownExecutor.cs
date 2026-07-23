@@ -1,26 +1,29 @@
-using System.Diagnostics;
+using Hushward.Application.Abstractions;
+using Hushward.Core.Actions;
 using Hushward.Core.Abstractions;
 
 namespace Hushward.Infrastructure.Power;
 
 public sealed class WindowsShutdownExecutor : IShutdownExecutor
 {
+    private readonly INightActionExecutor _actionExecutor;
+
+    public WindowsShutdownExecutor()
+        : this(new WindowsNightActionExecutor())
+    {
+    }
+
+    public WindowsShutdownExecutor(INightActionExecutor actionExecutor)
+    {
+        _actionExecutor = actionExecutor;
+    }
+
     public async Task ShutdownNowAsync(CancellationToken cancellationToken)
     {
-        var command = ShutdownCommand.CreateShutdownNow();
-        using var process = Process.Start(new ProcessStartInfo
+        var result = await _actionExecutor.ExecuteAsync(NightAction.ShutDown, cancellationToken).ConfigureAwait(false);
+        if (!result.IsSuccess)
         {
-            FileName = command.FileName,
-            Arguments = command.Arguments,
-            UseShellExecute = command.UseShellExecute,
-            CreateNoWindow = true
-        }) ?? throw new InvalidOperationException("Could not start shutdown.exe.");
-
-        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-        if (process.ExitCode != 0)
-        {
-            throw new InvalidOperationException($"shutdown.exe exited with code {process.ExitCode}.");
+            throw new InvalidOperationException($"{result.Error!.Code}: {result.Error.TechnicalDetail ?? result.Error.MessageKey}");
         }
     }
 }
-
