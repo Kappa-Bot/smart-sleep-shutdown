@@ -20,6 +20,7 @@ public sealed class InstallScriptTests
         Assert.Contains("Repetition.Duration", script);
         Assert.Contains("PT6H", script);
         Assert.Contains("-RunLevel Limited", script);
+        Assert.Contains("-MultipleInstances Parallel", script);
         Assert.DoesNotContain("LeastPrivilege", script);
         Assert.Contains("powercfg", script);
         Assert.Contains("RTCWAKE", script);

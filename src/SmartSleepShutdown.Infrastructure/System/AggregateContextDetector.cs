@@ -32,7 +32,8 @@ public sealed class AggregateContextDetector : IContextDetector
             {
                 blockers.Add(new BlockingContext(
                     BlockingContextType.DetectorFailure,
-                    $"{probe.GetType().Name} failed"));
+                    $"{probe.GetType().Name} fallo",
+                    BlockingContextSeverity.Hard));
             }
         }
 

@@ -74,6 +74,31 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task ShutdownInProgressStaysTrueWhileShutdownCommandRuns()
+    {
+        var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 1, 0, 0, TimeSpan.Zero));
+        var shutdownExecutor = new BlockingShutdownExecutor();
+        var viewModel = new MainWindowViewModel(
+            new FakeIdleDetector(() => new IdleSnapshot(clock.Now, TimeSpan.FromHours(2), false)),
+            new ClearContextDetector(),
+            shutdownExecutor,
+            clock,
+            action => action());
+
+        viewModel.IsEnabled = true;
+        await WaitUntilAsync(() => viewModel.IsCountdownActive);
+
+        clock.Now = clock.Now.AddSeconds(61);
+        await WaitUntilAsync(() => shutdownExecutor.Started);
+
+        Assert.True(viewModel.IsShutdownInProgress);
+        Assert.False(viewModel.IsCountdownActive);
+
+        shutdownExecutor.Complete();
+        await WaitUntilAsync(() => !viewModel.IsShutdownInProgress);
+    }
+
+    [Fact]
     public void TemporarilyDisableUntilTomorrowTurnsOffAndShowsPausedTrayStatus()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 22, 30, 0, TimeSpan.Zero));
@@ -86,7 +111,7 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.IsTemporarilyDisabled);
         Assert.Equal(new DateTimeOffset(2026, 4, 26, 0, 0, 0, TimeSpan.Zero), viewModel.TemporarilyDisabledUntil);
         Assert.Equal("Pausado hasta manana", viewModel.StatusText);
-        Assert.Equal("Smart Sleep Shutdown - PAUSADO hasta manana", viewModel.TrayStatusText);
+        Assert.Equal("Pausado hasta manana", viewModel.TrayStatusText);
         Assert.False(viewModel.CreateSettings().Enabled);
     }
 
@@ -104,7 +129,7 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.IsEnabled);
         Assert.False(viewModel.IsTemporarilyDisabled);
         Assert.Null(viewModel.TemporarilyDisabledUntil);
-        Assert.Equal("Smart Sleep Shutdown - ACTIVO - Vigilando", viewModel.TrayStatusText);
+        Assert.Equal("Vigilando", viewModel.TrayStatusText);
     }
 
     [Fact]
@@ -120,7 +145,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.False(viewModel.IsEnabled);
         Assert.False(viewModel.IsTemporarilyDisabled);
-        Assert.Equal("Smart Sleep Shutdown - DESACTIVADO", viewModel.TrayStatusText);
+        Assert.Equal("Desactivado", viewModel.TrayStatusText);
     }
 
     [Fact]
@@ -254,6 +279,25 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task ContextDetectorFailureBlocksShutdownWithoutPausingMonitor()
+    {
+        var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 1, 0, 0, TimeSpan.Zero));
+        var shutdownExecutor = new FakeShutdownExecutor();
+        var viewModel = new MainWindowViewModel(
+            new FakeIdleDetector(() => new IdleSnapshot(clock.Now, TimeSpan.FromHours(2), false)),
+            new ThrowingContextDetector(),
+            shutdownExecutor,
+            clock,
+            action => action());
+
+        viewModel.IsEnabled = true;
+
+        await WaitUntilAsync(() => viewModel.StatusText == "Bloqueado: detector");
+        Assert.False(viewModel.IsCountdownActive);
+        Assert.Equal(0, shutdownExecutor.CallCount);
+    }
+
+    [Fact]
     public async Task PassiveStatusShowsIdleProgress()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 4, 25, 1, 0, 0, TimeSpan.Zero));
@@ -267,7 +311,7 @@ public sealed class MainWindowViewModelTests
         viewModel.IsEnabled = true;
 
         await WaitUntilAsync(() => viewModel.StatusText == "Inactivo 12/15 min");
-        Assert.Equal("Smart Sleep Shutdown - ACTIVO - Inactivo 12/15 min", viewModel.TrayStatusText);
+        Assert.Equal("Inactivo 12/15 min", viewModel.TrayStatusText);
     }
 
     [Fact]
@@ -281,6 +325,26 @@ public sealed class MainWindowViewModelTests
         };
 
         Assert.Equal("Activo desde 03:10 hasta 06:00 | Inactividad 22 min | Contexto off", viewModel.ScheduleSummaryText);
+    }
+
+    [Fact]
+    public void ResetSafeDefaultsRestoresConservativeSettings()
+    {
+        var viewModel = new MainWindowViewModel
+        {
+            IsEnabled = true,
+            StartTimeText = "03:10",
+            IdleThresholdMinutes = 1,
+            ContextChecksEnabled = false
+        };
+
+        viewModel.ResetSafeDefaultsCommand.Execute(null);
+
+        Assert.False(viewModel.IsEnabled);
+        Assert.Equal("01:00", viewModel.StartTimeText);
+        Assert.Equal(15, viewModel.IdleThresholdMinutes);
+        Assert.True(viewModel.ContextChecksEnabled);
+        Assert.Equal("Desactivado", viewModel.StatusText);
     }
 
     [Fact]
@@ -392,6 +456,14 @@ public sealed class MainWindowViewModelTests
         }
     }
 
+    private sealed class ThrowingContextDetector : IContextDetector
+    {
+        public ValueTask<ContextSnapshot> GetCurrentContextAsync(CancellationToken cancellationToken)
+        {
+            throw new InvalidOperationException("context detector failed");
+        }
+    }
+
     private sealed class BlockedContextDetector : IContextDetector
     {
         private readonly string _reason;
@@ -417,6 +489,24 @@ public sealed class MainWindowViewModelTests
         {
             CallCount++;
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class BlockingShutdownExecutor : IShutdownExecutor
+    {
+        private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public bool Started { get; private set; }
+
+        public Task ShutdownNowAsync(CancellationToken cancellationToken)
+        {
+            Started = true;
+            return _completion.Task.WaitAsync(cancellationToken);
+        }
+
+        public void Complete()
+        {
+            _completion.TrySetResult();
         }
     }
 

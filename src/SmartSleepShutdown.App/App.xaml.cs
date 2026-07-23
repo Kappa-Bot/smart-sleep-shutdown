@@ -1,4 +1,5 @@
 using System.Windows;
+using SmartSleepShutdown.App.Diagnostics;
 
 namespace SmartSleepShutdown.App;
 
@@ -10,6 +11,20 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+        if (StartupIntent.IsScheduleDiagnosticsRequest(e.Args))
+        {
+            ConsoleDiagnostics.PrintScheduleReport();
+            Shutdown();
+            return;
+        }
+
+        if (StartupIntent.IsDumpDiagnosticsRequest(e.Args))
+        {
+            ConsoleDiagnostics.DumpLocalDiagnostics();
+            Shutdown();
+            return;
+        }
 
         _singleInstance = SingleInstanceCoordinator.CreateDefault();
         if (StartupIntent.IsExitRequest(e.Args))
@@ -51,6 +66,11 @@ public partial class App : System.Windows.Application
             Shutdown();
         }));
         _singleInstance.StartScheduledCheckListener(() => Dispatcher.Invoke(mainWindow.RunScheduledCheck));
+
+        if (StartupIntent.IsScheduledCheck(e.Args))
+        {
+            mainWindow.RunScheduledCheck();
+        }
 
         if (StartupIntent.ShouldShowMainWindow(e.Args))
         {

@@ -10,7 +10,7 @@ Windows WPF utility that shuts down the PC only when it is late enough, the user
 - App starts disabled
 - Shutdown command: `shutdown.exe /s /t 0`
 
-The app never shuts down silently. It shows `PC will shut down in 60 seconds`, starts a countdown, cancels on keyboard or mouse input, and re-checks activity/context before executing shutdown. Transient context noise during the countdown does not restart the countdown; a blocker must still be present at the final re-check to stop shutdown.
+The app never shuts down silently. It shows a 60 second Spanish warning, starts a countdown, cancels on keyboard or mouse input, and re-checks activity/context before executing shutdown. Transient context noise during the countdown does not restart the countdown; a blocker must still be present at the final re-check to stop shutdown.
 
 ## Tray Menu
 
@@ -23,7 +23,7 @@ Right-click the tray icon to:
 - see whether Smart Sleep Shutdown is `ON`, `OFF`, or paused until tomorrow
 - open the main window
 - activate or deactivate monitoring
-- pause monitoring until the next day
+- pause monitoring today
 - exit the app
 
 Closing the window hides it to the tray and shows a short hint so the user knows it is still running. Use `Salir` from the tray menu to close the app.
@@ -34,7 +34,7 @@ The tray icon has a status badge:
 - amber pause: suspended for today
 - gray: off
 
-Settings are saved locally, including enabled/off state, start time, idle threshold, context checks, and pause-until-tomorrow state.
+Settings are saved locally, including enabled/off state, start time, idle threshold, context checks, and pause-until-tomorrow state. If the settings file becomes corrupt, the app tries the `.bak` file before falling back to safe disabled defaults.
 
 ## Smart Schedule
 
@@ -55,11 +55,11 @@ The start time can cross midnight. For example, `23:00` means active from `23:00
 When enabled, shutdown is delayed by soft context blockers:
 
 - fullscreen foreground window
-- audio output activity
+- sustained audio output activity
 - sustained high CPU usage
 - known running apps: Teams, Zoom, OBS, Steam, Visual Studio, VS Code, PowerPoint
 
-Soft blockers prevent shutdown during the first hour of idle. After one hour idle, they no longer veto shutdown; this handles cases like falling asleep on a fullscreen game home screen. Detector failure is the hard blocker and still prevents shutdown.
+Soft blockers prevent shutdown during the first hour of idle. After one hour idle, they no longer veto shutdown; this handles cases like falling asleep on a fullscreen game home screen. Detector failure is the hard blocker and still prevents shutdown even when soft context checks are disabled.
 
 ## Project Layout
 
@@ -113,6 +113,17 @@ The wake task runs daily at `00:30`, wakes the computer when Windows wake timers
 The app also asks Windows to keep the system awake during the 60 second warning countdown so the PC does not go back to sleep before the final shutdown check.
 The installer attempts to enable wake timers for the current Windows power plan.
 The installer asks the currently installed process to exit gracefully before replacing files.
+
+## Local Diagnostics
+
+No telemetry is sent anywhere. Local-only support commands:
+
+```powershell
+SmartSleepShutdown.exe --diagnose-schedule
+SmartSleepShutdown.exe --dump-diagnostics
+```
+
+`--diagnose-schedule` prints Run key, wake task, wake timer, install path, and settings path information without opening the window. `--dump-diagnostics` prints the bounded local diagnostics file from `%LOCALAPPDATA%\SmartSleepShutdown\diagnostics.jsonl`.
 
 ## Agent-Friendly Docs
 

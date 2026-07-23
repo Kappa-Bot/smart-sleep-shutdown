@@ -48,6 +48,15 @@ public sealed class TrayIconService : IDisposable
         _notifyIcon.ShowBalloonTip(5000);
     }
 
+    public void ShowShutdownWarningHint()
+    {
+        _notifyIcon.Visible = true;
+        _notifyIcon.BalloonTipTitle = TrayMenuText.ShutdownWarningTitle;
+        _notifyIcon.BalloonTipText = TrayMenuText.ShutdownWarningMessage;
+        _notifyIcon.BalloonTipIcon = Forms.ToolTipIcon.Warning;
+        _notifyIcon.ShowBalloonTip(5000);
+    }
+
     public void Dispose()
     {
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
@@ -99,18 +108,22 @@ public sealed class TrayIconService : IDisposable
         _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add(new Forms.ToolStripMenuItem(TrayMenuText.Open, null, (_, _) => _openWindow()));
 
-        var toggleText = _viewModel.IsTemporarilyDisabled
-            ? TrayMenuText.EnableNow
-            : _viewModel.IsEnabled ? TrayMenuText.Disable : TrayMenuText.Enable;
-        _menu.Items.Add(new Forms.ToolStripMenuItem(toggleText, null, (_, _) => ToggleEnabled()));
-
-        _menu.Items.Add(new Forms.ToolStripMenuItem(
-            TrayMenuText.DisableUntilTomorrow,
-            null,
-            (_, _) => _viewModel.DisableUntilTomorrow())
+        if (_viewModel.IsTemporarilyDisabled)
         {
-            Enabled = !_viewModel.IsTemporarilyDisabled
-        });
+            _menu.Items.Add(new Forms.ToolStripMenuItem(TrayMenuText.EnableNow, null, (_, _) => _viewModel.ReactivateToday()));
+        }
+        else if (_viewModel.IsEnabled)
+        {
+            _menu.Items.Add(new Forms.ToolStripMenuItem(
+                TrayMenuText.DisableUntilTomorrow,
+                null,
+                (_, _) => _viewModel.DisableUntilTomorrow()));
+            _menu.Items.Add(new Forms.ToolStripMenuItem(TrayMenuText.Disable, null, (_, _) => ToggleEnabled()));
+        }
+        else
+        {
+            _menu.Items.Add(new Forms.ToolStripMenuItem(TrayMenuText.Enable, null, (_, _) => ToggleEnabled()));
+        }
 
         _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add(new Forms.ToolStripMenuItem(TrayMenuText.Exit, null, (_, _) => _exitApplication()));

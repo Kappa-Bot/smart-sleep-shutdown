@@ -21,6 +21,7 @@ The app should feel like a native Windows tray utility:
 - Warning countdown: 60 seconds.
 - Context checks: enabled.
 - Soft context override: after one hour of user idle, fullscreen/audio/high CPU/known-process blockers no longer veto shutdown.
+- Local diagnostics: bounded NDJSON at `%LOCALAPPDATA%\SmartSleepShutdown\diagnostics.jsonl`.
 
 ## Important Behaviors
 
@@ -29,10 +30,12 @@ The app should feel like a native Windows tray utility:
 - Temporary pause lasts until local midnight.
 - Closing the window hides it to tray; tray Exit closes the process.
 - During the 60 second warning, keyboard/mouse input cancels immediately. Context blockers are enforced at the final re-check so transient audio/CPU/fullscreen noise cannot restart warning loops forever.
-- `DetectorFailure` is a hard blocker. Fullscreen app, known process, audio, and high CPU are soft blockers; this allows shutdown after the user falls asleep on a game home screen.
+- `DetectorFailure` is a hard blocker, even if soft context checks are disabled. Fullscreen app, known process, sustained audio, and sustained high CPU are soft blockers; this allows shutdown after the user falls asleep on a game home screen.
 - Local install registers `SmartSleepShutdown-NightWake` in Task Scheduler at `00:30` with `WakeToRun`, 5 minute repetition, 6 hour duration, and `--scheduled-check`, plus the existing Run key.
 - `--scheduled-check` is a background launch. If another instance is primary, it signals an immediate scheduled check instead of opening the window. This fixes stale `Task.Delay` after sleep.
+- `--diagnose-schedule` prints local schedule and wake timer health. `--dump-diagnostics` prints local diagnostics. Neither opens the window.
 - The app holds `ES_SYSTEM_REQUIRED | ES_CONTINUOUS` during the 60 second warning countdown so Windows does not sleep again before the final check.
+- Corrupt settings restore from `.bak` when possible; unrecoverable settings fall back to safe disabled defaults.
 - UI language is Spanish; keep new UX strings Spanish.
 - Installer uses `--exit` to request graceful shutdown before publishing.
 

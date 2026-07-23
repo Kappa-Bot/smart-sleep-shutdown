@@ -51,4 +51,39 @@ public sealed class UserSettingsStoreTests
             File.Delete(backupPath);
         }
     }
+
+    [Fact]
+    public void JsonStoreRecoversValidBackupWhenPrimaryIsCorrupt()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.json");
+        var backupPath = $"{path}.bak";
+        var store = new JsonUserSettingsStore(path);
+        var snapshot = new UserSettingsSnapshot(
+            IsEnabled: true,
+            StartTimeText: "01:30",
+            IdleThresholdMinutes: 25,
+            ContextChecksEnabled: true,
+            TemporarilyDisabledUntil: null,
+            ResumeAfterTemporaryDisable: false);
+
+        try
+        {
+            store.Save(snapshot);
+            File.Copy(path, backupPath, overwrite: true);
+            File.WriteAllText(path, "{ bad json");
+
+            Assert.Equal(snapshot, store.Load());
+            Assert.Equal(snapshot, new JsonUserSettingsStore(path).Load());
+            Assert.Contains(Directory.EnumerateFiles(Path.GetDirectoryName(path)!), file => file.StartsWith(path + ".corrupt-", StringComparison.Ordinal));
+        }
+        finally
+        {
+            File.Delete(path);
+            File.Delete(backupPath);
+            foreach (var file in Directory.EnumerateFiles(Path.GetDirectoryName(path)!, Path.GetFileName(path) + ".corrupt-*"))
+            {
+                File.Delete(file);
+            }
+        }
+    }
 }

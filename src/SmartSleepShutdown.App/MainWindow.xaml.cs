@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Media;
 using System.ComponentModel;
+using SmartSleepShutdown.App.Diagnostics;
 using SmartSleepShutdown.App.Settings;
 using SmartSleepShutdown.App.ViewModels;
 using SmartSleepShutdown.Infrastructure.Power;
@@ -15,6 +16,7 @@ public partial class MainWindow : Window
     private readonly TrayIconService _trayIcon;
     private WindowsSystemSleepBlocker? _sleepBlocker;
     private bool _exitRequested;
+    private bool _shownStillRunningHint;
 
     public MainWindow()
     {
@@ -27,7 +29,8 @@ public partial class MainWindow : Window
             new WindowsShutdownExecutor(),
             clock,
             action => Dispatcher.Invoke(action),
-            JsonUserSettingsStore.CreateDefault());
+            JsonUserSettingsStore.CreateDefault(),
+            LocalDiagnosticsSink.CreateDefault());
 
         DataContext = _viewModel;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -61,7 +64,12 @@ public partial class MainWindow : Window
         {
             e.Cancel = true;
             Hide();
-            _trayIcon.ShowStillRunningHint();
+            if (!_shownStillRunningHint)
+            {
+                _trayIcon.ShowStillRunningHint();
+                _shownStillRunningHint = true;
+            }
+
             return;
         }
 
@@ -87,18 +95,32 @@ public partial class MainWindow : Window
     {
         if (e.PropertyName != nameof(MainWindowViewModel.IsCountdownActive))
         {
+            if (e.PropertyName == nameof(MainWindowViewModel.IsShutdownInProgress))
+            {
+                SyncSleepBlocker();
+            }
+
             return;
         }
 
+        SyncSleepBlocker();
         if (_viewModel.IsCountdownActive)
         {
-            StartPreventingSleep();
             ShowWarningNotification();
+        }
+    }
+
+    private void SyncSleepBlocker()
+    {
+        if (_viewModel.IsCountdownActive || _viewModel.IsShutdownInProgress)
+        {
+            StartPreventingSleep();
         }
         else
         {
             StopPreventingSleep();
         }
+
     }
 
     private void ShowWarningNotification()
@@ -110,6 +132,7 @@ public partial class MainWindow : Window
 
         Show();
         Activate();
+        _trayIcon.ShowShutdownWarningHint();
         SystemSounds.Exclamation.Play();
     }
 

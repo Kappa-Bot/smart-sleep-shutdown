@@ -25,6 +25,7 @@ Core must stay deterministic and testable.
 - `KnownProcessContextProbe`: known app blocker.
 - `WindowsShutdownExecutor`: fixed `shutdown.exe /s /t 0`.
 - `StartupRegistration`: HKCU Run key command generation.
+- Local diagnostics and schedule reporting stay local to the machine.
 
 Infrastructure should fail safe. Unexpected detector failures become blockers.
 
@@ -38,7 +39,7 @@ Infrastructure should fail safe. Unexpected detector failures become blockers.
 - Monitoring loop.
 - Countdown notification and cancellation.
 
-The app starts hidden with `--startup`, opens the existing instance on second launch, and supports `--exit` for graceful installer shutdown.
+The app starts hidden with `--startup`, opens the existing instance on second launch, supports `--exit` for graceful installer shutdown, and supports hidden `--scheduled-check`, `--diagnose-schedule`, and `--dump-diagnostics` commands.
 
 ## Runtime Flow
 
@@ -46,6 +47,7 @@ The app starts hidden with `--startup`, opens the existing instance on second la
 2. If enabled, monitor sleeps until the next precheck window.
 3. During the active window, it samples idle/context.
 4. If eligible, it enters warning and shows countdown.
-5. Any input or blocker cancels.
-6. At countdown expiry, it re-checks eligibility.
-7. Only then it runs shutdown.
+5. Keyboard or mouse input cancels and requires activity reset before another warning.
+6. Context blockers during countdown do not restart the warning loop.
+7. At countdown expiry, it re-checks idle and context.
+8. Only then it runs shutdown.

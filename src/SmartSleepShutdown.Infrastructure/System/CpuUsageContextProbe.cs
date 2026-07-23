@@ -6,10 +6,9 @@ namespace SmartSleepShutdown.Infrastructure.System;
 public sealed class CpuUsageContextProbe : IContextProbe
 {
     private const double BlockingThreshold = 0.35;
-    private const int RequiredConsecutiveSamples = 2;
 
     private CpuSample? _lastSample;
-    private int _highSamples;
+    private readonly SustainedSignalGate _signalGate = new(2, 2, TimeSpan.FromMinutes(2));
 
     public ValueTask<BlockingContext?> DetectAsync(CancellationToken cancellationToken)
     {
@@ -45,10 +44,10 @@ public sealed class CpuUsageContextProbe : IContextProbe
         }
 
         var usage = 1d - (double)idleDelta / totalDelta;
-        _highSamples = usage >= BlockingThreshold ? _highSamples + 1 : 0;
+        var sustainedHighCpu = _signalGate.Observe(usage >= BlockingThreshold, DateTimeOffset.UtcNow);
 
-        var context = _highSamples >= RequiredConsecutiveSamples
-            ? new BlockingContext(BlockingContextType.HighCpu, $"CPU usage is {usage:P0}")
+        var context = sustainedHighCpu
+            ? new BlockingContext(BlockingContextType.HighCpu, $"CPU alta: {usage:P0}")
             : null;
 
         return ValueTask.FromResult<BlockingContext?>(context);

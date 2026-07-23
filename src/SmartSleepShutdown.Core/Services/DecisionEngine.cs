@@ -18,7 +18,7 @@ public sealed class DecisionEngine
         {
             _warningStartedAt = null;
             State = DecisionState.Disabled;
-            return Current(ShutdownDecisionAction.None);
+            return Current(ShutdownDecisionAction.None, DecisionTransitionReason.Disabled);
         }
 
         if (State == DecisionState.Disabled)
@@ -28,7 +28,7 @@ public sealed class DecisionEngine
 
         if (State == DecisionState.ShutdownIssued)
         {
-            return Current(ShutdownDecisionAction.None);
+            return Current(ShutdownDecisionAction.None, DecisionTransitionReason.ShutdownIssued);
         }
 
         if (State == DecisionState.CancelledAwaitingRearm)
@@ -36,9 +36,10 @@ public sealed class DecisionEngine
             if (idle.InputDetected || idle.IdleDuration <= settings.IdleThreshold)
             {
                 State = DecisionState.Monitoring;
+                return Current(ShutdownDecisionAction.None, DecisionTransitionReason.ActivityResetRearmed);
             }
 
-            return Current(ShutdownDecisionAction.None);
+            return Current(ShutdownDecisionAction.None, DecisionTransitionReason.RecentInput);
         }
 
         if (State == DecisionState.Warning)
@@ -46,15 +47,16 @@ public sealed class DecisionEngine
             return EvaluateWarning(settings, idle, context, now);
         }
 
-        if (IsEligible(settings, idle, context, now))
+        var evaluation = EvaluateEligibility(settings, idle, context, now);
+        if (evaluation.IsEligible)
         {
             _warningStartedAt = now;
-            State = DecisionState.Warning;
-            return Current(ShutdownDecisionAction.StartWarning);
+            State = DecisionState.WarningCountdown;
+            return Current(ShutdownDecisionAction.StartWarning, DecisionTransitionReason.WarningStarted);
         }
 
-        State = DecisionState.Monitoring;
-        return Current(ShutdownDecisionAction.None);
+        State = evaluation.State;
+        return Current(ShutdownDecisionAction.None, evaluation.Reason);
     }
 
     public void CancelAndRequireRearm()
@@ -78,40 +80,69 @@ public sealed class DecisionEngine
         if (idle.InputDetected)
         {
             CancelAndRequireRearm();
-            return Current(ShutdownDecisionAction.CancelWarning);
+            return Current(ShutdownDecisionAction.CancelWarning, DecisionTransitionReason.WarningCancelledByInput);
         }
 
         _warningStartedAt ??= now;
         if (now - _warningStartedAt.Value < settings.WarningDuration)
         {
-            return Current(ShutdownDecisionAction.None);
+            return Current(ShutdownDecisionAction.None, DecisionTransitionReason.WarningContinuing);
         }
 
-        if (IsEligible(settings, idle, context, now))
+        var evaluation = EvaluateEligibility(settings, idle, context, now);
+        if (evaluation.IsEligible)
         {
             State = DecisionState.ShutdownIssued;
-            return Current(ShutdownDecisionAction.ShutdownNow);
+            return Current(ShutdownDecisionAction.ShutdownNow, DecisionTransitionReason.ShutdownIssued);
         }
 
         _warningStartedAt = null;
-        State = DecisionState.Monitoring;
-        return Current(ShutdownDecisionAction.CancelWarning);
+        State = evaluation.State;
+        return Current(ShutdownDecisionAction.CancelWarning, DecisionTransitionReason.WarningCancelledByFinalRecheck);
     }
 
-    private static bool IsEligible(
+    private static EligibilityEvaluation EvaluateEligibility(
         SleepShutdownSettings settings,
         IdleSnapshot idle,
         ContextSnapshot context,
         DateTimeOffset now)
     {
-        return MonitoringSchedule.IsInsideEvaluationWindow(settings, now)
-            && idle.IdleDuration > settings.IdleThreshold
-            && !idle.InputDetected
-            && !ContextBlockingPolicy.BlocksShutdown(settings, idle, context);
+        if (!MonitoringSchedule.IsInsideEvaluationWindow(settings, now))
+        {
+            return new EligibilityEvaluation(false, DecisionState.WaitingForWindow, DecisionTransitionReason.WaitingForStartTime);
+        }
+
+        if (idle.InputDetected)
+        {
+            return new EligibilityEvaluation(false, DecisionState.Monitoring, DecisionTransitionReason.RecentInput);
+        }
+
+        if (idle.IdleDuration <= settings.IdleThreshold)
+        {
+            return new EligibilityEvaluation(false, DecisionState.Monitoring, DecisionTransitionReason.IdleThresholdNotMet);
+        }
+
+        var blocker = ContextBlockingPolicy.GetEffectiveBlocker(settings, idle, context);
+        if (blocker is not null)
+        {
+            return new EligibilityEvaluation(
+                false,
+                DecisionState.ShutdownBlocked,
+                ContextBlockingPolicy.IsHardBlocker(blocker)
+                    ? DecisionTransitionReason.DetectorFailureBlocked
+                    : DecisionTransitionReason.SoftContextBlocked);
+        }
+
+        return new EligibilityEvaluation(true, DecisionState.IdleCandidate, DecisionTransitionReason.IdleCandidate);
     }
 
-    private DecisionResult Current(ShutdownDecisionAction action)
+    private DecisionResult Current(ShutdownDecisionAction action, DecisionTransitionReason reason)
     {
-        return new DecisionResult(action, State, _warningStartedAt);
+        return new DecisionResult(action, State, _warningStartedAt, reason);
     }
+
+    private readonly record struct EligibilityEvaluation(
+        bool IsEligible,
+        DecisionState State,
+        DecisionTransitionReason Reason);
 }

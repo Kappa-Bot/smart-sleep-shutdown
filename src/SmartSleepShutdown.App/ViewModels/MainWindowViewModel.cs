@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using SmartSleepShutdown.App.Settings;
+using SmartSleepShutdown.App.Diagnostics;
 using SmartSleepShutdown.Core.Abstractions;
 using SmartSleepShutdown.Core.Models;
 using SmartSleepShutdown.Core.Services;
@@ -17,9 +18,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private readonly ISystemClock? _clock;
     private readonly Action<Action> _marshalToUi;
     private readonly IUserSettingsStore? _settingsStore;
+    private readonly IDiagnosticsSink? _diagnosticsSink;
     private readonly DecisionEngine _decisionEngine = new();
     private readonly RelayCommand _cancelShutdownCommand;
     private readonly RelayCommand _disableUntilTomorrowCommand;
+    private readonly RelayCommand _resetSafeDefaultsCommand;
 
     private CancellationTokenSource? _monitoringCancellation;
     private CancellationTokenSource? _temporaryDisableCancellation;
@@ -33,6 +36,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private int _idleThresholdMinutes = 15;
     private bool _contextChecksEnabled = true;
     private bool _isCountdownActive;
+    private bool _isShutdownInProgress;
     private int _countdownSecondsRemaining;
     private DateTimeOffset? _temporarilyDisabledUntil;
     private bool _isLoadingSettings;
@@ -43,7 +47,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         IShutdownExecutor? shutdownExecutor = null,
         ISystemClock? clock = null,
         Action<Action>? marshalToUi = null,
-        IUserSettingsStore? settingsStore = null)
+        IUserSettingsStore? settingsStore = null,
+        IDiagnosticsSink? diagnosticsSink = null)
     {
         _idleDetector = idleDetector;
         _contextDetector = contextDetector;
@@ -51,8 +56,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _clock = clock;
         _marshalToUi = marshalToUi ?? (action => action());
         _settingsStore = settingsStore;
+        _diagnosticsSink = diagnosticsSink;
         _cancelShutdownCommand = new RelayCommand(CancelCountdownByUser, () => IsCountdownActive);
         _disableUntilTomorrowCommand = new RelayCommand(DisableUntilTomorrow, () => !IsTemporarilyDisabled);
+        _resetSafeDefaultsCommand = new RelayCommand(ResetSafeDefaults);
 
         LoadSettings();
     }
@@ -193,6 +200,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    public bool IsShutdownInProgress
+    {
+        get => _isShutdownInProgress;
+        private set => SetField(ref _isShutdownInProgress, value);
+    }
+
     public int CountdownSecondsRemaining
     {
         get => _countdownSecondsRemaining;
@@ -221,6 +234,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public ICommand DisableUntilTomorrowCommand => _disableUntilTomorrowCommand;
 
+    public ICommand ResetSafeDefaultsCommand => _resetSafeDefaultsCommand;
+
     public SleepShutdownSettings CreateSettings()
     {
         RefreshTemporaryDisableStatus();
@@ -245,6 +260,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
         _decisionEngine.CancelAndRequireRearm();
         IsCountdownActive = false;
+        IsShutdownInProgress = false;
         CountdownSecondsRemaining = 0;
         StatusText = "Cancelado por actividad";
     }
@@ -272,6 +288,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         ClearTemporaryDisable();
         IsEnabled = true;
         StatusText = "Vigilando";
+    }
+
+    public void ResetSafeDefaults()
+    {
+        ClearTemporaryDisable();
+        IsEnabled = false;
+        StartTimeText = SleepShutdownSettings.Default.StartTime.ToString("HH:mm");
+        IdleThresholdMinutes = (int)SleepShutdownSettings.Default.IdleThreshold.TotalMinutes;
+        ContextChecksEnabled = SleepShutdownSettings.Default.ContextChecksEnabled;
+        StatusText = "Desactivado";
+        SaveSettings();
     }
 
     public void RunScheduledCheck()
@@ -326,6 +353,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
+        _diagnosticsSink?.Write("monitor.start");
         _monitoringCancellation?.Cancel();
         _monitoringCancellation?.Dispose();
         _monitoringCancellation = new CancellationTokenSource();
@@ -337,8 +365,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         _monitoringCancellation?.Cancel();
         _monitoringCancellation?.Dispose();
         _monitoringCancellation = null;
+        _diagnosticsSink?.Write("monitor.stop");
         _decisionEngine.Disable();
         IsCountdownActive = false;
+        IsShutdownInProgress = false;
         CountdownSecondsRemaining = 0;
         StatusText = "Desactivado";
     }
@@ -420,6 +450,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
         catch
         {
+            _diagnosticsSink?.Write("monitor.unexpected_stop");
             ApplyUi(() =>
             {
                 _decisionEngine.CancelAndRequireRearm();
@@ -455,12 +486,30 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             return TimeSpan.FromMinutes(1);
         }
 
-        var context = settings.ContextChecksEnabled
-            ? await _contextDetector.GetCurrentContextAsync(cancellationToken).ConfigureAwait(false)
-            : ContextSnapshot.Clear;
+        ContextSnapshot context;
+        try
+        {
+            context = settings.ContextChecksEnabled
+                ? await _contextDetector.GetCurrentContextAsync(cancellationToken).ConfigureAwait(false)
+                : ContextSnapshot.Clear;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _diagnosticsSink?.Write("context.detector.failure", new { ex.GetType().Name });
+            context = ContextSnapshot.Blocked(new BlockingContext(
+                BlockingContextType.DetectorFailure,
+                "detector",
+                BlockingContextSeverity.Hard));
+        }
 
         var now = _clock.Now;
         var result = _decisionEngine.Evaluate(settings, idle, context, now);
+        _diagnosticsSink?.Write("decision", new
+        {
+            state = result.State.ToString(),
+            action = result.Action.ToString(),
+            reason = result.Reason.ToString()
+        });
 
         switch (result.Action)
         {
@@ -476,20 +525,40 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             case ShutdownDecisionAction.CancelWarning:
                 ApplyUi(() =>
                 {
-                    IsCountdownActive = false;
-                    CountdownSecondsRemaining = 0;
-                    StatusText = "Vigilando";
+                    if (result.Reason == DecisionTransitionReason.WarningCancelledByInput)
+                    {
+                        IsCountdownActive = false;
+                        CountdownSecondsRemaining = 0;
+                        StatusText = "Cancelado por actividad";
+                    }
+                    else
+                    {
+                        UpdatePassiveStatus(settings, idle, context, now, result);
+                    }
                 });
                 break;
 
             case ShutdownDecisionAction.ShutdownNow:
                 ApplyUi(() =>
                 {
+                    IsShutdownInProgress = true;
                     IsCountdownActive = false;
                     CountdownSecondsRemaining = 0;
                     StatusText = "Apagando";
                 });
-                await _shutdownExecutor.ShutdownNowAsync(cancellationToken).ConfigureAwait(false);
+                _diagnosticsSink?.Write("shutdown.start");
+                try
+                {
+                    await _shutdownExecutor.ShutdownNowAsync(cancellationToken).ConfigureAwait(false);
+                    _diagnosticsSink?.Write("shutdown.result", new { success = true });
+                    ApplyUi(() => IsShutdownInProgress = false);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _diagnosticsSink?.Write("shutdown.result", new { success = false, exception = ex.GetType().Name, ex.Message });
+                    ApplyUi(() => IsShutdownInProgress = false);
+                    throw;
+                }
                 break;
 
             case ShutdownDecisionAction.None:
@@ -550,6 +619,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         {
             _decisionEngine.CancelAndRequireRearm();
             IsCountdownActive = false;
+            IsShutdownInProgress = false;
             CountdownSecondsRemaining = 0;
             StatusText = "Vigilando";
         }
@@ -650,15 +720,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         if (IsTemporarilyDisabled)
         {
-            TrayStatusText = "Smart Sleep Shutdown - PAUSADO hasta manana";
+            TrayStatusText = "Pausado hasta manana";
         }
         else if (IsEnabled)
         {
-            TrayStatusText = $"Smart Sleep Shutdown - ACTIVO - {StatusText}";
+            TrayStatusText = StatusText;
         }
         else
         {
-            TrayStatusText = "Smart Sleep Shutdown - DESACTIVADO";
+            TrayStatusText = "Desactivado";
         }
     }
 

@@ -9,7 +9,10 @@ public static class StartupIntent
 
     public static bool IsBackgroundLaunch(IEnumerable<string> args)
     {
-        return HasArgument(args, "--startup") || IsScheduledCheck(args);
+        return HasArgument(args, "--startup")
+            || IsScheduledCheck(args)
+            || IsScheduleDiagnosticsRequest(args)
+            || IsDumpDiagnosticsRequest(args);
     }
 
     public static bool IsScheduledCheck(IEnumerable<string> args)
@@ -17,9 +20,20 @@ public static class StartupIntent
         return HasArgument(args, "--scheduled-check");
     }
 
+    public static bool IsScheduleDiagnosticsRequest(IEnumerable<string> args)
+    {
+        return HasArgument(args, "--diagnose-schedule");
+    }
+
+    public static bool IsDumpDiagnosticsRequest(IEnumerable<string> args)
+    {
+        return HasArgument(args, "--dump-diagnostics");
+    }
+
     public static bool ShouldActivateExistingPrimary(IEnumerable<string> args)
     {
-        return !IsExitRequest(args) && !IsBackgroundLaunch(args);
+        return !IsExitRequest(args)
+            && !IsBackgroundLaunch(args);
     }
 
     public static bool ShouldSignalScheduledCheck(IEnumerable<string> args)

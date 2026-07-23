@@ -17,12 +17,14 @@ public sealed class JsonUserSettingsStore : IUserSettingsStore
         _path = path;
     }
 
+    public static string DefaultPath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "SmartSleepShutdown",
+        "settings.json");
+
     public static JsonUserSettingsStore CreateDefault()
     {
-        var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SmartSleepShutdown");
-        return new JsonUserSettingsStore(Path.Combine(directory, "settings.json"));
+        return new JsonUserSettingsStore(DefaultPath);
     }
 
     public UserSettingsSnapshot? Load()
@@ -35,10 +37,47 @@ public sealed class JsonUserSettingsStore : IUserSettingsStore
         try
         {
             var json = File.ReadAllText(_path);
-            return JsonSerializer.Deserialize<UserSettingsSnapshot>(json, JsonOptions);
+            return Deserialize(json);
         }
         catch (JsonException)
         {
+            return TryRecoverBackup();
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private UserSettingsSnapshot? TryRecoverBackup()
+    {
+        var backupPath = $"{_path}.bak";
+        if (!File.Exists(backupPath))
+        {
+            QuarantineCorruptPrimary();
+            return null;
+        }
+
+        try
+        {
+            var recovered = Deserialize(File.ReadAllText(backupPath));
+            if (recovered is null)
+            {
+                QuarantineCorruptPrimary();
+                return null;
+            }
+
+            QuarantineCorruptPrimary();
+            File.Copy(backupPath, _path, overwrite: true);
+            return recovered;
+        }
+        catch (JsonException)
+        {
+            QuarantineCorruptPrimary();
             return null;
         }
         catch (IOException)
@@ -48,6 +87,31 @@ public sealed class JsonUserSettingsStore : IUserSettingsStore
         catch (UnauthorizedAccessException)
         {
             return null;
+        }
+    }
+
+    private UserSettingsSnapshot? Deserialize(string json)
+    {
+        return JsonSerializer.Deserialize<UserSettingsSnapshot>(json, JsonOptions);
+    }
+
+    private void QuarantineCorruptPrimary()
+    {
+        if (!File.Exists(_path))
+        {
+            return;
+        }
+
+        try
+        {
+            var corruptPath = $"{_path}.corrupt-{DateTimeOffset.Now:yyyyMMddHHmmssfff}";
+            File.Move(_path, corruptPath, overwrite: false);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
         }
     }
 

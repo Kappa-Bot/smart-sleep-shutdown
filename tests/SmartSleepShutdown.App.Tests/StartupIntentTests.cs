@@ -36,4 +36,20 @@ public sealed class StartupIntentTests
     {
         Assert.True(StartupIntent.ShouldActivateExistingPrimary([]));
     }
+
+    [Fact]
+    public void ScheduleDiagnosticsPrintsAndDoesNotShowWindow()
+    {
+        Assert.True(StartupIntent.IsScheduleDiagnosticsRequest(["--diagnose-schedule"]));
+        Assert.False(StartupIntent.ShouldShowMainWindow(["--diagnose-schedule"]));
+        Assert.False(StartupIntent.ShouldActivateExistingPrimary(["--diagnose-schedule"]));
+    }
+
+    [Fact]
+    public void DumpDiagnosticsPrintsAndDoesNotShowWindow()
+    {
+        Assert.True(StartupIntent.IsDumpDiagnosticsRequest(["--dump-diagnostics"]));
+        Assert.False(StartupIntent.ShouldShowMainWindow(["--dump-diagnostics"]));
+        Assert.False(StartupIntent.ShouldActivateExistingPrimary(["--dump-diagnostics"]));
+    }
 }

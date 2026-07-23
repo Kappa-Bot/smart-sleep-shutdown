@@ -11,16 +11,38 @@ public static class ContextBlockingPolicy
         IdleSnapshot idle,
         ContextSnapshot context)
     {
-        if (!settings.ContextChecksEnabled || !context.HasBlockingContext)
+        return GetEffectiveBlocker(settings, idle, context) is not null;
+    }
+
+    public static BlockingContext? GetEffectiveBlocker(
+        SleepShutdownSettings settings,
+        IdleSnapshot idle,
+        ContextSnapshot context)
+    {
+        if (!context.HasBlockingContext)
         {
-            return false;
+            return null;
         }
 
-        if (context.Blockers.Any(static blocker => blocker.Type == BlockingContextType.DetectorFailure))
+        var hardBlocker = context.Blockers.FirstOrDefault(IsHardBlocker);
+        if (hardBlocker is not null)
         {
-            return true;
+            return hardBlocker;
         }
 
-        return idle.IdleDuration < SoftBlockerOverrideIdleThreshold;
+        if (!settings.ContextChecksEnabled)
+        {
+            return null;
+        }
+
+        return idle.IdleDuration < SoftBlockerOverrideIdleThreshold
+            ? context.Blockers.FirstOrDefault()
+            : null;
+    }
+
+    public static bool IsHardBlocker(BlockingContext blocker)
+    {
+        return blocker.Severity == BlockingContextSeverity.Hard
+            || blocker.Type == BlockingContextType.DetectorFailure;
     }
 }

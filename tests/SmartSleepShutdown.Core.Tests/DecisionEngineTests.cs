@@ -42,7 +42,8 @@ public sealed class DecisionEngineTests
         var result = engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromHours(2), now), ContextSnapshot.Clear, now);
 
         result.Action.ShouldBe(ShutdownDecisionAction.None);
-        result.State.ShouldBe(DecisionState.Monitoring);
+        result.State.ShouldBe(DecisionState.WaitingForWindow);
+        result.Reason.ShouldBe(DecisionTransitionReason.WaitingForStartTime);
     }
 
     [Fact]
@@ -54,7 +55,8 @@ public sealed class DecisionEngineTests
         var result = engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromHours(2), now), ContextSnapshot.Clear, now);
 
         result.Action.ShouldBe(ShutdownDecisionAction.None);
-        result.State.ShouldBe(DecisionState.Monitoring);
+        result.State.ShouldBe(DecisionState.WaitingForWindow);
+        result.Reason.ShouldBe(DecisionTransitionReason.WaitingForStartTime);
     }
 
     [Fact]
@@ -71,7 +73,8 @@ public sealed class DecisionEngineTests
             warningStart.AddSeconds(60));
 
         result.Action.ShouldBe(ShutdownDecisionAction.CancelWarning);
-        result.State.ShouldBe(DecisionState.Monitoring);
+        result.State.ShouldBe(DecisionState.WaitingForWindow);
+        result.Reason.ShouldBe(DecisionTransitionReason.WarningCancelledByFinalRecheck);
     }
 
     [Fact]
@@ -96,6 +99,7 @@ public sealed class DecisionEngineTests
 
         result.Action.ShouldBe(ShutdownDecisionAction.None);
         result.State.ShouldBe(DecisionState.Monitoring);
+        result.Reason.ShouldBe(DecisionTransitionReason.IdleThresholdNotMet);
     }
 
     [Fact]
@@ -124,7 +128,43 @@ public sealed class DecisionEngineTests
         var result = engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromMinutes(16), now), context, now);
 
         result.Action.ShouldBe(ShutdownDecisionAction.None);
-        result.State.ShouldBe(DecisionState.Monitoring);
+        result.State.ShouldBe(DecisionState.ShutdownBlocked);
+        result.Reason.ShouldBe(DecisionTransitionReason.SoftContextBlocked);
+    }
+
+    [Fact]
+    public void DetectorFailureProducesHardBlockReason()
+    {
+        var engine = new DecisionEngine();
+        var context = ContextSnapshot.Blocked(new BlockingContext(
+            BlockingContextType.DetectorFailure,
+            "Probe failed",
+            BlockingContextSeverity.Hard));
+        var now = ActiveTime.AddHours(2);
+
+        var result = engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromHours(2), now), context, now);
+
+        result.Action.ShouldBe(ShutdownDecisionAction.None);
+        result.State.ShouldBe(DecisionState.ShutdownBlocked);
+        result.Reason.ShouldBe(DecisionTransitionReason.DetectorFailureBlocked);
+    }
+
+    [Fact]
+    public void DetectorFailureBlocksEvenWhenContextChecksAreDisabled()
+    {
+        var engine = new DecisionEngine();
+        var settings = EnabledSettings with { ContextChecksEnabled = false };
+        var context = ContextSnapshot.Blocked(new BlockingContext(
+            BlockingContextType.DetectorFailure,
+            "Probe failed",
+            BlockingContextSeverity.Hard));
+        var now = ActiveTime.AddHours(2);
+
+        var result = engine.Evaluate(settings, Idle(TimeSpan.FromHours(2), now), context, now);
+
+        result.Action.ShouldBe(ShutdownDecisionAction.None);
+        result.State.ShouldBe(DecisionState.ShutdownBlocked);
+        result.Reason.ShouldBe(DecisionTransitionReason.DetectorFailureBlocked);
     }
 
     [Fact]
@@ -141,6 +181,7 @@ public sealed class DecisionEngineTests
 
         result.Action.ShouldBe(ShutdownDecisionAction.CancelWarning);
         result.State.ShouldBe(DecisionState.CancelledAwaitingRearm);
+        result.Reason.ShouldBe(DecisionTransitionReason.WarningCancelledByInput);
     }
 
     [Fact]
@@ -157,6 +198,7 @@ public sealed class DecisionEngineTests
 
         result.Action.ShouldBe(ShutdownDecisionAction.ShutdownNow);
         result.State.ShouldBe(DecisionState.ShutdownIssued);
+        result.Reason.ShouldBe(DecisionTransitionReason.ShutdownIssued);
     }
 
     [Fact]
@@ -173,7 +215,8 @@ public sealed class DecisionEngineTests
             ActiveTime.AddSeconds(60));
 
         result.Action.ShouldBe(ShutdownDecisionAction.CancelWarning);
-        result.State.ShouldBe(DecisionState.Monitoring);
+        result.State.ShouldBe(DecisionState.ShutdownBlocked);
+        result.Reason.ShouldBe(DecisionTransitionReason.WarningCancelledByFinalRecheck);
     }
 
     [Fact]
@@ -203,7 +246,8 @@ public sealed class DecisionEngineTests
         var result = engine.Evaluate(EnabledSettings, Idle(TimeSpan.FromHours(2), now), context, now);
 
         result.Action.ShouldBe(ShutdownDecisionAction.None);
-        result.State.ShouldBe(DecisionState.Monitoring);
+        result.State.ShouldBe(DecisionState.ShutdownBlocked);
+        result.Reason.ShouldBe(DecisionTransitionReason.DetectorFailureBlocked);
     }
 
     [Fact]

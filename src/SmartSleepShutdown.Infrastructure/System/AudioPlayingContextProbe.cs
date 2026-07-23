@@ -7,6 +7,7 @@ public sealed class AudioPlayingContextProbe : IContextProbe
 {
     private const float PeakThreshold = 0.01f;
     private static readonly Guid AudioMeterInformationId = new("C02216F6-8C67-4B5B-9D00-D008E73E0064");
+    private readonly SustainedSignalGate _signalGate = new(2, 2, TimeSpan.FromMinutes(2));
 
     public ValueTask<BlockingContext?> DetectAsync(CancellationToken cancellationToken)
     {
@@ -25,8 +26,9 @@ public sealed class AudioPlayingContextProbe : IContextProbe
             var meter = (IAudioMeterInformation)meterObject;
             meter.GetPeakValue(out var peak);
 
-            var context = peak > PeakThreshold
-                ? new BlockingContext(BlockingContextType.AudioPlaying, "Audio is playing")
+            var sustainedAudio = _signalGate.Observe(peak > PeakThreshold, DateTimeOffset.UtcNow);
+            var context = sustainedAudio
+                ? new BlockingContext(BlockingContextType.AudioPlaying, "Hay audio activo")
                 : null;
 
             return ValueTask.FromResult<BlockingContext?>(context);
