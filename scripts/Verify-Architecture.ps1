@@ -7,12 +7,14 @@ $violations = [System.Collections.Generic.List[string]]::new()
 
 function Find-Text {
     param([string] $Path, [string] $Pattern, [string] $Label)
-    $matches = & rg -n --glob "*.cs" --glob "*.csproj" $Pattern $Path 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        foreach ($match in $matches) { $violations.Add("$Label`: $match") }
-    }
-    elseif ($LASTEXITCODE -ne 1) {
-        throw "Architecture scan failed for $Path."
+    $files = Get-ChildItem -LiteralPath $Path -Recurse -File |
+        Where-Object {
+            $_.Extension -in @(".cs", ".csproj") -and
+            $_.FullName -notmatch '[\\/](bin|obj)[\\/]'
+        }
+    foreach ($match in ($files | Select-String -Pattern $Pattern)) {
+        $relative = $match.Path.Substring($root.Length).TrimStart("\", "/")
+        $violations.Add("$Label`: $relative`:$($match.LineNumber):$($match.Line.Trim())")
     }
 }
 

@@ -18,22 +18,24 @@ $violations = [System.Collections.Generic.List[string]]::new()
 foreach ($relativePath in $scanPaths) {
     $path = Join-Path $root $relativePath
     if (-not (Test-Path -LiteralPath $path)) { continue }
-    $matches = & rg -n --glob "*.cs" $forbiddenPropertyPattern $path 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        foreach ($match in $matches) { $violations.Add("$relativePath`: $match") }
-    }
-    elseif ($LASTEXITCODE -ne 1) {
-        throw "Privacy scan failed for $relativePath."
+    $files = Get-ChildItem -LiteralPath $path -Recurse -File -Filter "*.cs" |
+        Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' }
+    foreach ($match in ($files | Select-String -Pattern $forbiddenPropertyPattern)) {
+        $file = $match.Path.Substring($root.Length).TrimStart("\", "/")
+        $violations.Add("$relativePath`: $file`:$($match.LineNumber):$($match.Line.Trim())")
     }
 }
 
-$networkMatches = & rg -n --glob "*.cs" 'HttpClient|SocketsHttpHandler|WebRequest' (Join-Path $root "src") `
-    --glob "!Hushward.Infrastructure/Updates/VelopackUpdateService.cs" 2>$null
-if ($LASTEXITCODE -eq 0) {
-    foreach ($match in $networkMatches) { $violations.Add("Unexpected network surface: $match") }
-}
-elseif ($LASTEXITCODE -ne 1) {
-    throw "Network boundary scan failed."
+$updateService = [System.IO.Path]::GetFullPath(
+    (Join-Path $root "src\Hushward.Infrastructure\Updates\VelopackUpdateService.cs"))
+$sourceFiles = Get-ChildItem -LiteralPath (Join-Path $root "src") -Recurse -File -Filter "*.cs" |
+    Where-Object {
+        $_.FullName -notmatch '[\\/](bin|obj)[\\/]' -and
+        [System.IO.Path]::GetFullPath($_.FullName) -ne $updateService
+    }
+foreach ($match in ($sourceFiles | Select-String -Pattern 'HttpClient|SocketsHttpHandler|WebRequest')) {
+    $file = $match.Path.Substring($root.Length).TrimStart("\", "/")
+    $violations.Add("Unexpected network surface: $file`:$($match.LineNumber):$($match.Line.Trim())")
 }
 
 if ($violations.Count -gt 0) {
