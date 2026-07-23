@@ -7,22 +7,12 @@ public sealed class InstallScriptTests
     {
         var script = File.ReadAllText(FindProjectFile("scripts", "Install-Local.ps1"));
 
-        Assert.Contains("Hushward-NightWake", script);
-        Assert.Contains("New-ScheduledTaskTrigger", script);
-        Assert.Contains("00:30", script);
-        Assert.Contains("New-ScheduledTaskSettingsSet", script);
-        Assert.Contains("-WakeToRun", script);
-        Assert.Contains("Register-ScheduledTask", script);
         Assert.Contains("--startup", script);
-        Assert.Contains("--scheduled-check", script);
-        Assert.Contains("Repetition.Interval", script);
-        Assert.Contains("PT5M", script);
-        Assert.Contains("Repetition.Duration", script);
-        Assert.Contains("PT6H", script);
-        Assert.Contains("-RunLevel Limited", script);
-        Assert.DoesNotContain("LeastPrivilege", script);
-        Assert.Contains("powercfg", script);
-        Assert.Contains("RTCWAKE", script);
+        Assert.Contains("managed by Hushward when a routine enables wake", script);
+        Assert.DoesNotContain("powercfg", script);
+        Assert.DoesNotContain("RTCWAKE", script);
+        Assert.DoesNotContain("Register-ScheduledTask", script);
+        Assert.DoesNotContain("00:30", script);
     }
 
     private static string FindProjectFile(params string[] pathParts)
@@ -43,4 +33,3 @@ public sealed class InstallScriptTests
         throw new FileNotFoundException($"Could not find {Path.Combine(pathParts)} from {AppContext.BaseDirectory}.");
     }
 }
-
