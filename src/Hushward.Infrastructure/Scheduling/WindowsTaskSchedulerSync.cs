@@ -51,12 +51,16 @@ public sealed class WindowsTaskSchedulerSync : IScheduleSynchronizer
         var schedules = DesiredWakeSchedule.FromRoutines(routines, _timeZone);
         if (schedules.Count == 0)
         {
-            var delete = await _runner.RunAsync(
+            var deleteProduct = await _runner.RunAsync(
                 TaskSchedulerCommandBuilder.BuildDelete(DesiredWakeSchedule.ProductTaskName),
                 cancellationToken).ConfigureAwait(false);
-            return delete.IsSuccess
+            var deleteLegacy = await _runner.RunAsync(
+                TaskSchedulerCommandBuilder.BuildDelete(DesiredWakeSchedule.LegacyTaskName),
+                cancellationToken).ConfigureAwait(false);
+            var errorCode = deleteProduct.Error?.Code ?? deleteLegacy.Error?.Code;
+            return errorCode is null
                 ? OperationResult<ScheduleHealth>.Success(new ScheduleHealth(true, null, null))
-                : OperationResult<ScheduleHealth>.Success(new ScheduleHealth(false, null, delete.Error!.Code));
+                : OperationResult<ScheduleHealth>.Success(new ScheduleHealth(false, null, errorCode));
         }
 
         var register = await _runner.RunAsync(

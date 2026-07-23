@@ -88,7 +88,7 @@ public sealed class TaskSchedulerCommandBuilderTests
     }
 
     [Fact]
-    public async Task No_wake_schedule_unregisters_product_task_only()
+    public async Task No_wake_schedule_unregisters_product_and_legacy_tasks()
     {
         var runner = new RecordingRunner();
         var sync = new WindowsTaskSchedulerSync(
@@ -100,9 +100,10 @@ public sealed class TaskSchedulerCommandBuilderTests
         var result = await sync.SynchronizeAsync([EnabledRoutine() with { WakePolicy = WakePolicy.NeverWake }], CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Single(runner.Commands);
+        Assert.Equal(2, runner.Commands.Count);
         Assert.Contains("Hushward-NightWake", CommandText(runner.Commands[0]), StringComparison.Ordinal);
         Assert.DoesNotContain("SmartSleepShutdown-NightWake", CommandText(runner.Commands[0]), StringComparison.Ordinal);
+        Assert.Contains("SmartSleepShutdown-NightWake", CommandText(runner.Commands[1]), StringComparison.Ordinal);
     }
 
     private static NightRoutine EnabledRoutine() =>
