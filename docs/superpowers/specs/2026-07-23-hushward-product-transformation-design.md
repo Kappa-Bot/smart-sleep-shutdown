@@ -2,7 +2,7 @@
 
 **Status:** Approved product direction, written for implementation planning  
 **Date:** 2026-07-23  
-**Repository:** `Kappa-Bot/smart-sleep-shutdown`  
+**Repository:** `Kappa-Bot/hushward`  
 **Working product name:** **Hushward**  
 **Descriptor:** *Night guardian for Windows* / *Guardián nocturno para Windows*
 

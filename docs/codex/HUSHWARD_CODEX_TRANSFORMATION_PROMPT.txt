@@ -1,7 +1,7 @@
 /caveman Ultra
 /superpowers
 
-Contexto ya cargado. Ejecuta la transformación completa de `Kappa-Bot/smart-sleep-shutdown` a **Hushward**. No reabras brainstorming ni rediseñes el producto.
+Contexto ya cargado. Ejecuta la transformación completa de `Kappa-Bot/hushward` a **Hushward**. No reabras brainstorming ni rediseñes el producto.
 
 BASE
 - Parte de `docs/hushward-product-design` en `67c15bf83179583b282b322158cd90ba733a854f` o de un descendiente que contenga estos documentos.
